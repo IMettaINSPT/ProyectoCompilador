@@ -11,11 +11,6 @@ public class Token {
         this.nroLinea = NroLinea;
     }
 
-    public enum TipoToken {
-        PALABRA_RESERVADA, IDENTIFICADOR, NUMERO, OPERADOR, SIMBOLO, DESCONOCIDO
-    }
-    
-    
     public String getTipo() {
         return Tipo;
     }
@@ -29,35 +24,38 @@ public class Token {
         this.valor = valor;
     }
     
-    public boolean EsIdentificador()
+    public boolean esIdentificador()
     {
         return "IDENTIFICADOR".equals(this.getTipo());
     }
+    public boolean esCadena()
+    {
+        return "CADENA".equals(this.getTipo());
+    }
     
-    public boolean EsNumero()
+    public boolean esNumero()
     {
         return "NUMERO".equals(this.getTipo());
     }
-    public boolean EsSignoCondicion(){
-        return ("=".equals(this.getTipo()) || "<>".equals(this.getTipo()) || "<".equals(this.getTipo()) 
-                || "<=".equals(this.getTipo())  || ">".equals(this.getTipo()) || ">=".equals(this.getTipo())
+    public boolean esSignoCondicion(){
+        return ("=".equals(this.getValor()) || "<>".equals(this.getValor()) || "<".equals(this.getValor()) 
+                || "<=".equals(this.getValor())  || ">".equals(this.getValor()) || ">=".equals(this.getValor())
                 );
     }
-    public boolean EsSignoExpresion(){ return ("+".equals(this.getTipo()) || "-".equals(this.getTipo()));}
+    public boolean esSignoExpresion(){ return ("+".equals(this.getValor()) || "-".equals(this.getValor()));}
     
-    public boolean EsSignoTermino(){ return ("*".equals(this.getTipo()) || "/".equals(this.getTipo()));}
-    
+    public boolean esSignoTermino(){ return ("*".equals(this.getValor()) || "/".equals(this.getValor()));}
+      
+    public boolean esConstrante()
+    {
+        return "CONST".equals(this.getValor());
+    }
     public int getNroLinea() {
         return nroLinea;
     }
     public void setNroLinea(int nroLinea) {
         this.nroLinea = nroLinea;
     }
-    public boolean EsConstrante()
-    {
-        return "CONST".equals(this.getTipo());
-    }
-    
     @Override
     public String toString() {
         return "Token{" + "type=" + this.Tipo + ", value='" +this.valor  + ", Linea='" +this.getNroLinea()  + '\'' + '}';

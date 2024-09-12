@@ -1,0 +1,5 @@
+var x;
+begin
+	readln(x);
+	writeln('ahaha5588%%&&//··');
+end.

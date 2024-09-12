@@ -1,0 +1,6 @@
+var x;
+begin
+	readln(x);
+	write(x);
+	write('+');
+end.
