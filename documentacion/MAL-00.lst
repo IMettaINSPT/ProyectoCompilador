@@ -1,8 +1,0 @@
-   1: var X, Y;
-   2: 
-   3: procedure INICIAR;
-   4:   const Y = 2;
-   5:   procedure ASIGNAR;
-   6:     X = Y;
-           ^
-ERROR: Se esperaba un operador de asignacion (:=)

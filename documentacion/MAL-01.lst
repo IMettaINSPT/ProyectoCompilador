@@ -1,5 +1,0 @@
-   1: VAR BASE, EXPO, RESU;
-   2: 
-   3: PROCEDUR POT;
-     ^
-ERROR: Identificador no declarado (PROCEDUR)

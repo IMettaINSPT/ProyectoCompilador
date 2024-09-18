@@ -1,6 +1,0 @@
-var X, Y;
-
-procedure INICIAR;
-  const Y = 2;
-  procedure ASIGNAR;
-    X =
