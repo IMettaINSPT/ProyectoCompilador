@@ -5,7 +5,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String nomArchivo = "";
+        String nomArchivo = "D:\\IMETTA\\Sistemas1\\ProyectoCompilador\\documentacion\\BIEN-09.PL0";
         AnalizadorLexico alex;
         try {
             alex = new AnalizadorLexico(nomArchivo);
@@ -13,7 +13,7 @@ public class Main {
 //        int numeroLinea = 1;
 //
             AnalizadorSintactico aSint = new AnalizadorSintactico(alex);
-            aSint.setToken(alex.escanear());
+            aSint.setToken(alex.escanear(1));
             aSint.programa();
             System.out.println("OK");
 

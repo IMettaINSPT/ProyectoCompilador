@@ -3,10 +3,12 @@ package compilador;
 public class Token {
     private String Tipo;
     private String valor;
+    private int nroLinea; 
     
-    public Token(String tipo, String valor) {
+    public Token(String tipo, String valor, int NroLinea) {
         this.Tipo = tipo;
         this.valor = valor;
+        this.nroLinea = NroLinea;
     }
 
     public String getTipo() {
@@ -48,10 +50,15 @@ public class Token {
     {
         return "CONST".equals(this.getValor());
     }
-
+    public int getNroLinea() {
+        return nroLinea;
+    }
+    public void setNroLinea(int nroLinea) {
+        this.nroLinea = nroLinea;
+    }
     @Override
     public String toString() {
-        return "Token{" + "type=" + this.Tipo + ", value='" +this.valor   + '\'' + '}';
+        return "Token{" + "type=" + this.Tipo + ", value='" +this.valor  + ", Linea='" +this.getNroLinea()  + '\'' + '}';
     }
     
 }
