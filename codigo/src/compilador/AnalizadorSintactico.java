@@ -1,150 +1,94 @@
 package compilador;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class AnalizadorSintactico {
 
     private Token token;
+    private String scope = "";
     private final AnalizadorLexico lex;
+    private final AnalizadorSemantico semantica;
 
     public void setToken(Token token) {
         this.token = token;
     }
 
-    public AnalizadorSintactico(AnalizadorLexico scanner) {
+    public AnalizadorSintactico(AnalizadorLexico scanner, AnalizadorSemantico semantic) {
         this.lex = scanner;
+        this.semantica = semantic;
+    }
+
+    private void mostrarError(Errores.erroresEnum enumError, Token token) {
+       Errores.mostrarError(enumError, token, lex.getPathFile());
     }
 
     private void leerProximoToken() throws IOException {
-        this.setToken(this.lex.escanear(this.token.getNroLinea()));
-    }
-
-    private enum ErroresSintacticos {
-        FALTA_NUMERO, FALTA_PARENTESIS_A, FALTA_PARENTESIS_C, FALTA_IGUAL, FALTA_SIGNO_TERMINO, FALTA_SIGNO_COND, FALTA_SIGNO_EXP, FALTA_IDENTIFICADOR, FALTA_DO, FALTA_ODD, FALTA_THEN, FALTA_PTOYCOMA, FALTA_ASIGNACION, DESCONOCIDO, FALTA_END
-    }
-
-    private void mostrarError(ErroresSintacticos error, int linea) {
-
-        switch (error) {
-            case ErroresSintacticos.FALTA_IDENTIFICADOR -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un identificador");
-                break;
-            }
-            case ErroresSintacticos.FALTA_PARENTESIS_A -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un parentesis (  ");
-                break;
-            }
-            case ErroresSintacticos.FALTA_PARENTESIS_C -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un parentesis )  ");
-                break;
-            }
-            case ErroresSintacticos.FALTA_NUMERO -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un Numero");
-                break;
-            }
-            case ErroresSintacticos.FALTA_IGUAL -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un igual (=)");
-                break;
-            }
-            case ErroresSintacticos.FALTA_ASIGNACION -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba una asignacion (:=)");
-                break;
-            }
-            case ErroresSintacticos.FALTA_PTOYCOMA -> {
-                System.out.println("Error linea: " + linea + " : Se esperaba un Punto y coma (;)");
-                break;
-            }
-            case ErroresSintacticos.DESCONOCIDO -> {
-                System.out.println("Error linea: " + linea + " : DESCONOCIDO TOKEN:" + this.token.getValor());
-                break;
-            }
-            case ErroresSintacticos.FALTA_END -> {
-                System.out.println("Error linea: " + linea + " : se esperaba la palabra reservada END");
-                break;
-            }
-            case ErroresSintacticos.FALTA_THEN -> {
-                System.out.println("Error linea: " + linea + " : se esperaba la palabra reservada THEN");
-                break;
-            }
-            case ErroresSintacticos.FALTA_DO -> {
-                System.out.println("Error linea: " + linea + " : se esperaba la palabra reservada DO");
-                break;
-            }
-            case ErroresSintacticos.FALTA_ODD -> {
-                System.out.println("Error linea: " + linea + " : se esperaba la palabra reservada ODD");
-                break;
-            }
-            case ErroresSintacticos.FALTA_SIGNO_COND -> {
-                System.out.println("Error linea: " + linea + " : se esperaba un signo de los siguientes <,>,<=,>=,=,<>");
-                break;
-            }
-            case ErroresSintacticos.FALTA_SIGNO_EXP -> {
-                System.out.println("Error linea: " + linea + " : se esperaba un signo de los siguientes +,-");
-                break;
-            }
-            case ErroresSintacticos.FALTA_SIGNO_TERMINO -> {
-                System.out.println("Error linea: " + linea + " : se esperaba un signo de los siguientes *,/");
-                break;
-            }
-        }
-        System.exit(error.ordinal());
-
+        this.setToken(this.lex.escanear());
     }
 
     public void programa() throws IOException {
 // REGLA PROGRAMA  BLOQUE() -> Terminal(".")
         // Primer token inicial 
-        bloque();
+        bloque(0);
         if (this.token.getValor().equals(".")) {
 //Obtenego proximo token
             leerProximoToken();
         } else {
-            mostrarError(ErroresSintacticos.DESCONOCIDO, this.token.getNroLinea());
+            mostrarError(Errores.erroresEnum.DESCONOCIDO, this.token);
         }
     }
 
-    private void bloque() throws IOException {
-
+    private void bloque(int base) throws IOException {
+        scope = "DECLARACION";
+        int desplazamiento = 0;
         if (this.token.esConstrante()) {
+            String nomCte = "";
             leerProximoToken();
             if (this.token.esIdentificador()) {
+                nomCte = this.token.getValor();
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
             if (this.token.getValor().equals("=")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IGUAL, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IGUAL, this.token);
             }
             if (this.token.esNumero()) {
+                semantica.agregar(nomCte, "CONST", Integer.parseInt(this.token.getValor()), base, desplazamiento, scope);
+                desplazamiento++;
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_NUMERO, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
             }
             while (token.getValor().equals(",")) {
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
+                    nomCte = this.token.getValor();
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
                 }
                 if (this.token.getValor().equals("=")) {
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_IGUAL, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_IGUAL, this.token);
                 }
                 if (this.token.esNumero()) {
+                    semantica.agregar(nomCte, "CONST", Integer.parseInt(this.token.getValor()), base, desplazamiento, scope);
+                    desplazamiento++;
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_NUMERO, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
                 }
             } //fin while
 
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PTOYCOMA, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
 
         } //FIN CONSTANTE
@@ -152,99 +96,114 @@ public class AnalizadorSintactico {
         if (this.token.getValor().equals("VAR")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
+                semantica.agregar(this.token.getValor(), "VAR", 0, base, desplazamiento, scope);
+                desplazamiento++;
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
 
             while (token.getValor().equals(",")) { //while var ident, ident ;
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
+                    semantica.agregar(this.token.getValor(), "VAR", 0, base, desplazamiento, scope);
+                    desplazamiento++;
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
                 }
             }   //while var ident, ident ;
 
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PTOYCOMA, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
         } //fin VAR
 
         while (token.getValor().equals("PROCEDURE")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
+                semantica.agregar(this.token.getValor(), "PROCEDURE", 0, base, desplazamiento, scope);
+                desplazamiento++;
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PTOYCOMA, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
-            bloque();
+            bloque(desplazamiento + base);
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PTOYCOMA, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
         } //FIN WHILE
 
-        Proposicion();
+        proposicion(base, desplazamiento);
     } // FIN FUNCION BLOQUE
 
-    private void Proposicion() throws IOException {
+    //A PARTIR DE ACA SOLO USO LOS IDENTIFICADORES PARA BUSCARLOS NO LOS DECLARO
+    private void proposicion(int base, int desplazamiento) throws IOException {
+        scope = "BUSQUEDA";
+        ArrayList<String> tiposEsperados = new ArrayList<>();
+
         if (this.token.esIdentificador()) {
+            tiposEsperados.add("VAR");
+            this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
             leerProximoToken();
             if (this.token.getValor().equals(":=")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_ASIGNACION, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_ASIGNACION, this.token);
             }
-            expresion();
+            expresion(base, desplazamiento);
         }
         if (this.token.getValor().equals("CALL")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
+                tiposEsperados.clear();
+                tiposEsperados.add("PROCEDURE");
+                this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
         }
         if (this.token.getValor().equals("BEGIN")) {
             leerProximoToken();
-            Proposicion();
+            proposicion(base, desplazamiento);
             while (this.token.getValor().equals(";")) {
                 leerProximoToken();
-                Proposicion();
+                proposicion(base, desplazamiento);
             }
             if (this.token.getValor().equals("END")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_END, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_END, this.token);
             }
         }
         if (this.token.getValor().equals("IF")) {
             leerProximoToken();
-            condicion();
+            condicion(base, desplazamiento);
             if (this.token.getValor().equals("THEN")) {
                 leerProximoToken();
-                Proposicion();
+                proposicion(base, desplazamiento);
             } else {
-                mostrarError(ErroresSintacticos.FALTA_THEN, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_THEN, this.token);
             }
         }
         if (this.token.getValor().equals("WHILE")) {
             leerProximoToken();
-            condicion();
+            condicion(base, desplazamiento);
             if (this.token.getValor().equals("DO")) {
                 leerProximoToken();
-                Proposicion();
+                proposicion(base, desplazamiento);
             } else {
-                mostrarError(ErroresSintacticos.FALTA_DO, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_DO, this.token);
             }
         }
         if (this.token.getValor().equals("READLN")) {
@@ -252,51 +211,60 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals("(")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PARENTESIS_A, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
             }
 
             if (this.token.esIdentificador()) {
+                tiposEsperados.clear();
+                tiposEsperados.add("VAR");
+                tiposEsperados.add("CONST");
+                this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
+
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
 
             while (this.token.getValor().equals(",")) {
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
+                    tiposEsperados.clear();
+                    tiposEsperados.add("VAR");
+                    tiposEsperados.add("CONST");
+                    this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_IDENTIFICADOR, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
                 }
             }
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PARENTESIS_C, this.token.getNroLinea());
-            }            
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+            }
         }
         if (this.token.getValor().equals("WRITE")) {
             leerProximoToken();
             if (this.token.getValor().equals("(")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PARENTESIS_A, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
             }
             if (this.token.esCadena()) {
                 leerProximoToken();
             }
-            expresion();
+            expresion(base, desplazamiento);
             while (this.token.getValor().equals(",")) {
                 leerProximoToken();
                 if (this.token.esCadena()) {
                     leerProximoToken();
-                    }
-                expresion();
+                }
+                expresion(base, desplazamiento);
             }
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PARENTESIS_C, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
             }
         }
         if (this.token.getValor().equals("WRITELN")) {
@@ -306,113 +274,119 @@ public class AnalizadorSintactico {
                 if (this.token.esCadena()) {
                     leerProximoToken();
                 }
-                expresion();
+                expresion(base, desplazamiento);
                 while (this.token.getValor().equals(",")) {
                     leerProximoToken();
                     if (this.token.esCadena()) {
                         leerProximoToken();
                     }
-                    expresion();
+                    expresion(base, desplazamiento);
                 }
                 if (this.token.getValor().equals(")")) {
                     leerProximoToken();
                 } else {
-                    mostrarError(ErroresSintacticos.FALTA_PARENTESIS_C, this.token.getNroLinea());
+                    mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
                 }
 
             }
         }
     } //FIN PROPOSICION
 
-    private void condicion() throws IOException {
-
+    private void condicion(int base, int desplazamiento) throws IOException {
+        scope = "BUSQUEDA";
         if (this.token.getValor().equals("ODD")) {
             leerProximoToken();
-            expresion();            
-            return ;
+            expresion(base, desplazamiento);
+            return;
         }
-        expresion();
+        expresion(base, desplazamiento);
         if (this.token.esSignoCondicion()) {
             switch (this.token.getValor()) {
                 case "=" -> {
                     //break;
                 }
                 case "<>" -> {
-                   // break;
+                    // break;
                 }
                 case "<" -> {
-                   // break;
+                    // break;
                 }
                 case "<=" -> {
-                   // break;
+                    // break;
                 }
                 case ">" -> {
-                  //  break;
+                    //  break;
                 }
                 case ">=" -> {
-                   // break;
+                    // break;
                 }
             }
             leerProximoToken();
         } else {
-            mostrarError(ErroresSintacticos.FALTA_SIGNO_COND, this.token.getNroLinea());
+            mostrarError(Errores.erroresEnum.FALTA_SIGNO_COND, this.token);
         }
-        expresion();
+        expresion(base, desplazamiento);
     }
 
-    private void expresion() throws IOException {
-
+    private void expresion(int base, int desplazamiento) throws IOException {
+        scope = "BUSQUEDA";
         if (token.esSignoExpresion()) {
 
             switch (this.token.getValor()) {
                 case "+" -> {
-                  //  break;
+                    //  break;
                 }
                 case "-" -> {
-                   // break;
+                    // break;
                 }
             }
             leerProximoToken();
         }
 
-        termino();
+        termino(base, desplazamiento);
 
         while (token.esSignoExpresion()) {
             switch (this.token.getValor()) {
                 case "+" -> {
-                  //  break;
+                    //  break;
                 }
                 case "-" -> {
-                   // break;
+                    // break;
                 }
             }
             leerProximoToken();
-            termino();
+            termino(base, desplazamiento);
         }
 
     }
 
-    private void termino() throws IOException {
-
-        Factor();
+    private void termino(int base, int desplazamiento) throws IOException {
+        scope = "BUSQUEDA";
+        factor(base, desplazamiento);
         while (this.token.esSignoTermino()) {
             switch (this.token.getValor()) {
                 case "*" -> {
-                   // break;
+                    // break;
                 }
                 case "/" -> {
-                  //  break;
+                    //  break;
                 }
             }
             leerProximoToken();
-            Factor();
+            factor(base, desplazamiento);
         }
 
     }
 
-    private void Factor() throws IOException {
-
+    private void factor(int base, int desplazamiento) throws IOException {
+        scope = "BUSQUEDA";
+        ArrayList<String> tiposEsperados = new ArrayList<>();
         if (this.token.esIdentificador()) {
+            tiposEsperados.clear();
+            tiposEsperados.add("VAR");
+            tiposEsperados.add("CONST");
+            this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
+
             leerProximoToken();
         }
         if (this.token.esNumero()) {
@@ -420,11 +394,11 @@ public class AnalizadorSintactico {
         }
         if (this.token.getValor().equals("(")) {
             leerProximoToken();
-            expresion();
+            expresion(base, desplazamiento);
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
-                mostrarError(ErroresSintacticos.FALTA_PARENTESIS_C, this.token.getNroLinea());
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
             }
         }
     }

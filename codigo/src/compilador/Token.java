@@ -1,64 +1,71 @@
 package compilador;
 
 public class Token {
+
     private String Tipo;
     private String valor;
-    private int nroLinea; 
-    
-    public Token(String tipo, String valor, int NroLinea) {
+    private String tiposEsperados = "";
+    public Token(String tipo, String valor) {
         this.Tipo = tipo;
         this.valor = valor;
-        this.nroLinea = NroLinea;
     }
 
     public String getTipo() {
         return Tipo;
     }
+
     public void setTipo(String Tipo) {
         this.Tipo = Tipo;
     }
+
     public String getValor() {
-        return  valor.toUpperCase();
+        return valor.toUpperCase();
     }
+
     public void setValor(String valor) {
         this.valor = valor;
     }
-    
-    public boolean esIdentificador()
-    {
+
+    public boolean esIdentificador() {
         return "IDENTIFICADOR".equals(this.getTipo());
     }
-    public boolean esCadena()
-    {
+
+    public boolean esCadena() {
         return "CADENA".equals(this.getTipo());
     }
-    
-    public boolean esNumero()
-    {
+
+    public boolean esNumero() {
         return "NUMERO".equals(this.getTipo());
     }
-    public boolean esSignoCondicion(){
-        return ("=".equals(this.getValor()) || "<>".equals(this.getValor()) || "<".equals(this.getValor()) 
-                || "<=".equals(this.getValor())  || ">".equals(this.getValor()) || ">=".equals(this.getValor())
-                );
+
+    public boolean esSignoCondicion() {
+        return ("=".equals(this.getValor()) || "<>".equals(this.getValor()) || "<".equals(this.getValor())
+                || "<=".equals(this.getValor()) || ">".equals(this.getValor()) || ">=".equals(this.getValor()));
     }
-    public boolean esSignoExpresion(){ return ("+".equals(this.getValor()) || "-".equals(this.getValor()));}
-    
-    public boolean esSignoTermino(){ return ("*".equals(this.getValor()) || "/".equals(this.getValor()));}
-      
-    public boolean esConstrante()
-    {
+
+    public boolean esSignoExpresion() {
+        return ("+".equals(this.getValor()) || "-".equals(this.getValor()));
+    }
+
+    public boolean esSignoTermino() {
+        return ("*".equals(this.getValor()) || "/".equals(this.getValor()));
+    }
+
+    public boolean esConstrante() {
         return "CONST".equals(this.getValor());
     }
-    public int getNroLinea() {
-        return nroLinea;
+
+    public String getTiposEsperados() {
+        return tiposEsperados;
     }
-    public void setNroLinea(int nroLinea) {
-        this.nroLinea = nroLinea;
+
+    public void setTiposEsperados(String tiposEsperados) {
+        this.tiposEsperados = tiposEsperados;
     }
+
     @Override
     public String toString() {
-        return "Token{" + "type=" + this.Tipo + ", value='" +this.valor  + ", Linea='" +this.getNroLinea()  + '\'' + '}';
+        return "Token{" + "type=" + this.Tipo + ", value='" + this.valor + '\'' + '}';
     }
-    
+
 }

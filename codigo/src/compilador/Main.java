@@ -5,15 +5,15 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String nomArchivo = "D:\\IMETTA\\Sistemas1\\ProyectoCompilador\\documentacion\\BIEN-09.PL0";
+        String nomArchivo = "C:\\INSPT2\\S1\\ProyectoCompilador\\MAL-01.PL0";
         AnalizadorLexico alex;
         try {
             alex = new AnalizadorLexico(nomArchivo);
 //        Token token;
 //        int numeroLinea = 1;
-//
-            AnalizadorSintactico aSint = new AnalizadorSintactico(alex);
-            aSint.setToken(alex.escanear(1));
+            AnalizadorSemantico aSem = new AnalizadorSemantico(alex.getPathFile());
+            AnalizadorSintactico aSint = new AnalizadorSintactico(alex,aSem);
+            aSint.setToken(alex.escanear());
             aSint.programa();
             System.out.println("OK");
 

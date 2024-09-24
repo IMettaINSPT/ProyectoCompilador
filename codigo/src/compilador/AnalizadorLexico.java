@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ public class AnalizadorLexico {
     private FileReader lector;
     private FileOutputStream escritor;
     private char caracter;
+    private String pathFile ;
     private int ultimoCaracterLeido = -1; // Almacena el último carácter leído
 
     // Conjuntos de palabras reservadas y símbolos del lenguaje PL/0
@@ -54,20 +56,27 @@ public class AnalizadorLexico {
         SIMBOLOS.add('#');
     }
 
-    public AnalizadorLexico(String path) throws IOException {
-        this.lector  = new FileReader(path) ;
-        this.escritor= new FileOutputStream(path.toUpperCase().replace(".PL0", "_LOG.txt"));
-        cadena = "";
+    public String getPathFile() {
+        return pathFile;
     }
 
-    private int LeerChar() throws IOException
-    {
-       int ch = this.lector.read();
-       if(ch != -1){
-        this.escritor.write(ch);}
+    public AnalizadorLexico(String path) throws IOException {
+        this.pathFile = path;
+        this.lector = new FileReader(path);
+        this.escritor = new FileOutputStream(path.toUpperCase().replace(".PL0", "_LOG.txt"));
+        cadena = "";
+
+    }
+
+    private int leerChar() throws IOException {
+        int ch = this.lector.read();
+        if (ch != -1) {
+            this.escritor.write(ch);
+        }
         return ch;
     }
-    public Token escanear(int NroLineaAnt) throws IOException {
+
+    public Token escanear() throws IOException {
         cadena = "";
         int ch;
         // Usar último carácter leído si existe, de lo contrario leer uno nuevo
@@ -75,19 +84,15 @@ public class AnalizadorLexico {
             ch = ultimoCaracterLeido;
             ultimoCaracterLeido = -1; // Resetea para que no se use de nuevo
         } else {
-            ch = LeerChar();
-        }
-
-        if (ch == 13 || ch == 10) {
-            NroLineaAnt += 1;
+            ch = leerChar();
         }
         // Ignorar espacios en blanco y caracteres de control
         while (ch != -1 && Character.isWhitespace((char) ch)) {
-            ch = LeerChar();
+            ch = leerChar();
         }
 
         if (ch == -1) {
-            return new Token("EOF", "EOF", NroLineaAnt);
+            return new Token("EOF", "EOF");
             //   return "EOF";
         } else {
             char currentChar = (char) ch;
@@ -97,32 +102,46 @@ public class AnalizadorLexico {
                 cadena += currentChar;
 
                 if (String.valueOf(currentChar).equals(":") || String.valueOf(currentChar).equals("<") || String.valueOf(currentChar).equals(">")) {
-                    while ((ch = LeerChar()) != -1 && SIMBOLOS.contains((char) ch)) {
+                    while ((ch = leerChar()) != -1 && SIMBOLOS.contains((char) ch)) {
                         cadena += (char) ch;
                     }
-                                    ultimoCaracterLeido = ch; 
+                    ultimoCaracterLeido = ch;
 
                 }
-                return new Token("SIMBOLOS", cadena, NroLineaAnt);
+                return new Token("SIMBOLOS", cadena);
                 // return "SIMBOLOS: " + cadena;
             }
 
             if (currentChar == '\'') {
                 cadena += currentChar;
-                while ((ch = LeerChar()) != -1 ) {
+                while ((ch = leerChar()) != -1) {
                     currentChar = (char) ch;
                     cadena += currentChar;
-                    if (currentChar == '\'') {                       
-                        break;
+                    if (currentChar == '\'') {
+                        ultimoCaracterLeido = -1;
+                        return new Token("CADENA", cadena);
+                    }
+                    if (System.lineSeparator().equals(ch)) {
+                        ultimoCaracterLeido = -1;
+                        return new Token("DESCONOCIDO", cadena);
                     }
                 }
+                if (System.lineSeparator().equals(ch)) {
+                    ultimoCaracterLeido = -1;
+                    return new Token("DESCONOCIDO", cadena);
+                }
+
+                if (ch == -1) {
+                    ultimoCaracterLeido = -1;
+                    return new Token("DESCONOCIDO", cadena);
+                }
                 ultimoCaracterLeido = -1; // Guardar el último carácter leído
-                return new Token("CADENA", cadena, NroLineaAnt);
+                return new Token("CADENA", cadena);
             }
             // Verificar si es una letra o dígito para construir palabras o números
             if (Character.isLetter(currentChar)) {
                 cadena += currentChar;
-                while ((ch = LeerChar()) != -1 && (Character.isLetterOrDigit((char) ch))) {
+                while ((ch = leerChar()) != -1 && (Character.isLetterOrDigit((char) ch))) {
                     currentChar = (char) ch;
                     cadena += currentChar;
                 }
@@ -130,10 +149,10 @@ public class AnalizadorLexico {
 
                 // Verificar si la palabra es reservada
                 if (PALABRAS_RESERVADAS.contains(cadena.toUpperCase())) {
-                    return new Token("PALABRA RESERVADA", cadena, NroLineaAnt);
+                    return new Token("PALABRA RESERVADA", cadena);
                     // return "PALABRA RESERVADA: " + cadena;
                 } else {
-                    return new Token("IDENTIFICADOR", cadena, NroLineaAnt);
+                    return new Token("IDENTIFICADOR", cadena);
 
                     //  return "IDENTIFICADOR: " + cadena;
                 }
@@ -142,17 +161,17 @@ public class AnalizadorLexico {
             // Verificar si es un número
             if (Character.isDigit(currentChar)) {
                 cadena += currentChar;
-                while ((ch = LeerChar()) != -1 && Character.isDigit((char) ch)) {
+                while ((ch = leerChar()) != -1 && Character.isDigit((char) ch)) {
                     cadena += (char) ch;
                 }
                 ultimoCaracterLeido = ch; // Guardar el último carácter leído
-                return new Token("NUMERO", cadena, NroLineaAnt);
+                return new Token("NUMERO", cadena);
 
                 //  return "" + cadena;
             }
 
             // Si el carácter no es reconocido
-            return new Token("NO IDENTIFICADO ", String.valueOf(currentChar), NroLineaAnt); //"" + currentChar;
+            return new Token("NO IDENTIFICADO ", String.valueOf(currentChar)); //"" + currentChar;
         }
     }
 }
