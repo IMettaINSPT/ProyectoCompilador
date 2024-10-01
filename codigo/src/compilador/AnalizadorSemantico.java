@@ -8,9 +8,9 @@ public class AnalizadorSemantico {
     RegistroSemantico tablaSemantica[];
     String arhivoSalidaLog ;
     
-    public AnalizadorSemantico(String archivoSalidaLog) {
+    public AnalizadorSemantico(String archSalidaLog) {
         tablaSemantica = new RegistroSemantico[1024];
-        this.arhivoSalidaLog = arhivoSalidaLog;
+        this.arhivoSalidaLog = archSalidaLog;
     }
     
     public void agregar(String identificador, String tipoIdent, int valorIdent, int base, int desplazamiento, String scope) {

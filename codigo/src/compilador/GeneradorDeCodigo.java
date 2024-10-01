@@ -4,16 +4,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class GeneradorDeCodigo {
 
     private ArrayList<Byte> memoria;
+    private String fileOutPath;
 
-    public GeneradorDeCodigo() {
+    public GeneradorDeCodigo(String fileOutPath) {
+        this.fileOutPath = fileOutPath.toUpperCase().replace(".PL0", ".exe");
         memoria = new ArrayList<>();
         memoria.add(((byte) 0x4D));
         memoria.add(((byte) 0x5A));
@@ -1809,14 +1809,43 @@ public class GeneradorDeCodigo {
         memoria.add(((byte) 0xC3));
     }
 
-    public void agregar(String instruccion) {
+    public void cargarByte(int instruccion) {
+
+        memoria.add((byte) instruccion);
+    }
+    public void cargarByteEn(int instruccion, int pos) {
+
+        memoria.set( pos,(byte)instruccion);
+    }
+    
+    // me vienen 32 bits en windows
+    public void cargarInt(int value) {   
+        byte b1 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(0)),16);
+        memoria.add(b1);
+        byte b2 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(1)),16);
+        memoria.add(b2);
+        byte b3 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(2)),16);
+        memoria.add(b3);
+        byte b4 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(3)),16);
+        memoria.add(b4);        
         
-        byte[] data = instruccion.getBytes(StandardCharsets.UTF_8);
-        memoria.add(data[0]);
+    }
+    
+     public void cargarIntEn(int value, int pos) {   
+        byte b1 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(0)),16);
+        memoria.set(pos, b1);
+        byte b2 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(1)),16);
+        memoria.set(pos, b2);
+        byte b3 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(2)),16);
+        memoria.set(pos, b3);
+        byte b4 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).charAt(3)),16);
+        memoria.set(pos, b4);        
+        
     }
 
+    //vuelca 
     public void dump() {
-        File file = new File("salida.bin");
+        File file = new File(this.fileOutPath);
         try (FileOutputStream salida = new FileOutputStream(file)) {
             for (byte b : memoria) {
                 salida.write(b);

@@ -1,0 +1,2 @@
+var ^DO
+Error :se esperaba un identificador

@@ -7,8 +7,9 @@ public class Errores {
 
     public enum erroresEnum {
         FALTA_NUMERO, FALTA_PARENTESIS_A, FALTA_PARENTESIS_C, FALTA_IGUAL, FALTA_SIGNO_TERMINO,
-        FALTA_SIGNO_COND, FALTA_SIGNO_EXP, FALTA_IDENTIFICADOR, FALTA_PUNTO_Y_COMA, FALTA_DO, FALTA_ODD, FALTA_THEN,
-        FALTA_ASIGNACION, DESCONOCIDO, FALTA_END, IDENTIFICADOR_DUPLICADO, IDENTIFICADOR_NOIDENTIFICADO, TIPO_IDENT_ERROR
+        FALTA_SIGNO_COND, FALTA_SIGNO_EXP, FALTA_IDENTIFICADOR, FALTA_PUNTO_Y_COMA,FALTA_PUNTO_Y_COMA_COMA, FALTA_DO, FALTA_ODD, FALTA_THEN,
+        FALTA_ASIGNACION, DESCONOCIDO, FALTA_END, IDENTIFICADOR_DUPLICADO, IDENTIFICADOR_NOIDENTIFICADO, TIPO_IDENT_ERROR,
+        FALTA_FACTOR_IDENT_PARA,FALTA_CADENA_FACTOR_IDENT_PARA
     }
 
     public static void mostrarError(erroresEnum error, Token token, String archivoSalida) {
@@ -23,6 +24,18 @@ public class Errores {
             }
             case FALTA_PARENTESIS_A -> {
                 err = "Error :se esperaba un parentesis (  ";
+                System.out.println(err);
+                escribirErrorLog(err, token, archivoSalida);
+                break;
+            }
+            case FALTA_FACTOR_IDENT_PARA ->{
+                 err = "Error : se esperaba un factor (identificador,numero, abrir parentesis)  ";
+                System.out.println(err);
+                escribirErrorLog(err, token, archivoSalida);
+                break;
+            }
+            case FALTA_CADENA_FACTOR_IDENT_PARA ->{
+                 err = "Error : se esperaba unA cadena o un factor (identificador,numero, abrir parentesis)  ";
                 System.out.println(err);
                 escribirErrorLog(err, token, archivoSalida);
                 break;
@@ -57,6 +70,12 @@ public class Errores {
                 escribirErrorLog(err, token, archivoSalida);
                 break;
             }
+              case FALTA_PUNTO_Y_COMA_COMA -> {
+                err = "Error :se esperaba una coma o un Punto y coma (;)";
+                System.out.println(err);
+                escribirErrorLog(err, token, archivoSalida);
+                break;
+            }      
             case DESCONOCIDO -> {
                 err = "Error :DESCONOCIDO TOKEN:" + token.getValor();
                 System.out.println(err);

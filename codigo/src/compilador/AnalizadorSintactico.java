@@ -1,5 +1,7 @@
 package compilador;
 
+import static compilador.Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA;
+import static compilador.Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -9,14 +11,15 @@ public class AnalizadorSintactico {
     private String scope = "";
     private final AnalizadorLexico lex;
     private final AnalizadorSemantico semantica;
-
+    private final GeneradorDeCodigo genCod;
     public void setToken(Token token) {
         this.token = token;
     }
 
-    public AnalizadorSintactico(AnalizadorLexico scanner, AnalizadorSemantico semantic) {
+    public AnalizadorSintactico(AnalizadorLexico scanner, AnalizadorSemantico semantic, GeneradorDeCodigo gen) {
         this.lex = scanner;
         this.semantica = semantic;
+        this.genCod = gen;
     }
 
     private void mostrarError(Errores.erroresEnum enumError, Token token) {
@@ -34,6 +37,8 @@ public class AnalizadorSintactico {
         if (this.token.getValor().equals(".")) {
 //Obtenego proximo token
             leerProximoToken();
+            this.genCod.dump();
+            
         } else {
             mostrarError(Errores.erroresEnum.DESCONOCIDO, this.token);
         }
@@ -88,7 +93,7 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA, this.token);
             }
 
         } //FIN CONSTANTE
@@ -117,7 +122,7 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
-                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
+                mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA, this.token);
             }
         } //fin VAR
 
@@ -240,7 +245,7 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
-                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+                mostrarError(Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA, this.token);
             }
         }
         if (this.token.getValor().equals("WRITE")) {
@@ -264,7 +269,7 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
-                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+                mostrarError(Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA, this.token);
             }
         }
         if (this.token.getValor().equals("WRITELN")) {
@@ -285,7 +290,7 @@ public class AnalizadorSintactico {
                 if (this.token.getValor().equals(")")) {
                     leerProximoToken();
                 } else {
-                    mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+                    mostrarError(Errores.erroresEnum.FALTA_FACTOR_IDENT_PARA, this.token);
                 }
 
             }
