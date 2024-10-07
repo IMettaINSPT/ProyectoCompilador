@@ -1,5 +1,0 @@
-var X, Y, Z;
-
-procedure MULTIPLICAR;
-var A, B, ^A
-Error :el identificador 'A' ya se encuentra declarado

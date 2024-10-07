@@ -1,0 +1,6 @@
+CONST N =20;
+
+VAR A, B, C;
+
+PROCEDURE TR^#
+Error :se esperaba un Punto y coma (;)

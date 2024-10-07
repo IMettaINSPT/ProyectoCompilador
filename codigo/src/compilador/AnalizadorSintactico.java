@@ -1,7 +1,5 @@
 package compilador;
 
-import static compilador.Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA;
-import static compilador.Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA;
 import java.io.IOException;
 import java.util.ArrayList;
 

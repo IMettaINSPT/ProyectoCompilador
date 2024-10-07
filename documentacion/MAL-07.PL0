@@ -1,4 +1,4 @@
-CONST N 20;
+CONST N =20;
 
 VAR A, B, C;
 

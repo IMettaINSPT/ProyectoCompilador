@@ -14,6 +14,9 @@ public class Main {
 //        int numeroLinea = 1;
             AnalizadorSemantico aSem = new AnalizadorSemantico(nomArchivo);
             GeneradorDeCodigo genCod = new GeneradorDeCodigo(nomArchivo);
+            //   el 0X indica que es un nro en hexa
+            //genCod.cargarInt(0X2F7E9145);
+
             AnalizadorSintactico aSint = new AnalizadorSintactico(alex, aSem, genCod);
 
             aSint.setToken(alex.escanear());
