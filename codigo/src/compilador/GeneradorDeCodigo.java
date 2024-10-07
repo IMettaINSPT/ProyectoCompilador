@@ -1820,25 +1820,25 @@ public class GeneradorDeCodigo {
     
     // me vienen 32 bits en windows
     public void cargarInt(int value) {   
-        byte b1 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(0,2)),16);
+        byte b1 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
         memoria.add(b1);
-        byte b2 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(2,4)),16);
+        byte b2 = (byte) Integer.parseInt(Integer.toHexString(value).substring(2,4),16);
         memoria.add(b2);
-        byte b3 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(4,6)),16);
+        byte b3 = (byte) Integer.parseInt(Integer.toHexString(value).substring(4,6),16);
         memoria.add(b3);
-        byte b4 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(6,8)),16);
+        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(6,8),16);
         memoria.add(b4);        
         
     }
     
      public void cargarIntEn(int value, int pos) {   
-        byte b1 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(0,2)),16);
+        byte b1 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
         memoria.set(pos, b1);
-        byte b2 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(2,4)),16);
+        byte b2 = (byte) Integer.parseInt(Integer.toHexString(value).substring(2,4),16);
         memoria.set(pos, b2);
-        byte b3 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(4,6)),16);
+        byte b3 = (byte) Integer.parseInt(Integer.toHexString(value).substring(4,6),16);
         memoria.set(pos, b3);
-        byte b4 = (byte) Integer.parseInt(String.valueOf(Integer.toHexString(value).substring(6,8)),16);
+        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(6,8),16);
         memoria.set(pos, b4);        
         
     }
