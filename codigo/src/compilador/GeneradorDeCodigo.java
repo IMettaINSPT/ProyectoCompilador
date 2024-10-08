@@ -1821,26 +1821,25 @@ public class GeneradorDeCodigo {
     // me vienen 32 bits en windows
     public void cargarInt(int value) {   
         byte b1 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
-        memoria.add(b1);
         byte b2 = (byte) Integer.parseInt(Integer.toHexString(value).substring(2,4),16);
-        memoria.add(b2);
         byte b3 = (byte) Integer.parseInt(Integer.toHexString(value).substring(4,6),16);
-        memoria.add(b3);
-        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(6,8),16);
+        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
         memoria.add(b4);        
-        
+        memoria.add(b3);        
+        memoria.add(b2);        
+        memoria.add(b1);        
+
     }
     
      public void cargarIntEn(int value, int pos) {   
         byte b1 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
-        memoria.set(pos, b1);
         byte b2 = (byte) Integer.parseInt(Integer.toHexString(value).substring(2,4),16);
-        memoria.set(pos, b2);
         byte b3 = (byte) Integer.parseInt(Integer.toHexString(value).substring(4,6),16);
-        memoria.set(pos, b3);
-        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(6,8),16);
+        byte b4 = (byte) Integer.parseInt(Integer.toHexString(value).substring(0,2),16);
         memoria.set(pos, b4);        
-        
+        memoria.set(pos+1, b3); 
+        memoria.set(pos+2, b2); 
+        memoria.set(pos+3, b1); 
     }
 
     //vuelca 
