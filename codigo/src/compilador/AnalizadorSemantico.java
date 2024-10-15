@@ -26,6 +26,9 @@ public class AnalizadorSemantico {
             
             cantVariables++;
         }
+        
+        //ACA SE GUARDA EL SIZE DEL VECTOR DEL MOMENTO AL CARGAR EL VECTOR
+
         if (tipoIdent.equals("PROCEDURE")) {
             valorIdent = 0;
         }
