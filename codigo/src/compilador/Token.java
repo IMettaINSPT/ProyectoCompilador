@@ -2,19 +2,18 @@ package compilador;
 
 public class Token {
 
-    private String Tipo;
+    private TipoToken Tipo;
     private String valor;
-    private String tiposEsperados = "";
-    public Token(String tipo, String valor) {
+    public Token(TipoToken tipo, String valor) {
         this.Tipo = tipo;
         this.valor = valor;
     }
 
-    public String getTipo() {
+    public TipoToken getTipo() {
         return Tipo;
     }
 
-    public void setTipo(String Tipo) {
+    public void setTipo(TipoToken Tipo) {
         this.Tipo = Tipo;
     }
 
@@ -27,40 +26,38 @@ public class Token {
     }
 
     public boolean esIdentificador() {
-        return "IDENTIFICADOR".equals(this.getTipo());
+        return this.Tipo.equals(TipoToken.IDENTIFICADOR);
     }
-
+    public Boolean esEOF() {
+        return this.Tipo.equals(TipoToken.EOF);
+    }
     public boolean esCadena() {
-        return "CADENA".equals(this.getTipo());
+        return this.Tipo.equals(TipoToken.CADENA);
     }
 
     public boolean esNumero() {
-        return "NUMERO".equals(this.getTipo());
+        return this.Tipo.equals(TipoToken.NUMERO);
     }
 
     public boolean esSignoCondicion() {
-        return ("=".equals(this.getValor()) || "<>".equals(this.getValor()) || "<".equals(this.getValor())
-                || "<=".equals(this.getValor()) || ">".equals(this.getValor()) || ">=".equals(this.getValor()));
+        return this.Tipo.equals(TipoToken.MENOR)
+                || this.Tipo.equals(TipoToken.MENOR_O_IGUAL)
+                || this.Tipo.equals(TipoToken.MAYOR)
+                || this.Tipo.equals(TipoToken.MAYOR)
+                || this.Tipo.equals(TipoToken.IGUAL)
+                || this.Tipo.equals(TipoToken.DIFERENTE);
     }
 
     public boolean esSignoExpresion() {
-        return ("+".equals(this.getValor()) || "-".equals(this.getValor()));
+      return this.Tipo.equals(TipoToken.SUMA);
     }
 
     public boolean esSignoTermino() {
-        return ("*".equals(this.getValor()) || "/".equals(this.getValor()));
+        return this.Tipo.equals(TipoToken.MULTIPLICACION) || this.Tipo.equals(TipoToken.DIVISION);
     }
 
     public boolean esConstrante() {
-        return "CONST".equals(this.getValor());
-    }
-
-    public String getTiposEsperados() {
-        return tiposEsperados;
-    }
-
-    public void setTiposEsperados(String tiposEsperados) {
-        this.tiposEsperados = tiposEsperados;
+        return this.getTipo().equals(TipoToken.PALABRA_RESERVADA) && "CONST".equals(this.getValor());
     }
 
     @Override

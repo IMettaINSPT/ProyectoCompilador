@@ -1,0 +1,28 @@
+package compilador;
+
+public enum TipoToken {
+    SUMA,
+    RESTA,
+    MULTIPLICACION,
+    DIVISION,
+    PARENTESIS_APERTURA,
+    PARENTESIS_CIERRE,
+    PUNTO,
+    DOS_PUNTOS,
+    PUNTO_Y_COMA,
+    ASIGNACION,
+    MENOR,
+    MENOR_O_IGUAL,
+    MAYOR,
+    MAYOR_O_IGUAL,
+    IGUAL,
+    DIFERENTE,
+    COMA,
+    IDENTIFICADOR,
+    NUMERO,
+    PALABRA_RESERVADA,
+    EOF,
+    ODD,
+    CADENA,
+    DESCONOCIDO
+}

@@ -1,19 +1,15 @@
 package compilador;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class AnalizadorSintactico {
 
     private Token token;
-    private String scope = "";
     private final AnalizadorLexico lex;
-    private final AnalizadorSemantico semantica;
+    private final AnalizadorSemantico asem;
     private final GeneradorDeCodigo genCod;
-    public static int TAMANO_HEADER = 244;
-    public static int SECTION_ALIGNMENT = 216;
-
-    private int cantVariables;
+    private int cantVariablesDeclaradas;
+    private boolean huboHant;
 
     public void setToken(Token token) {
         this.token = token;
@@ -21,9 +17,10 @@ public class AnalizadorSintactico {
 
     public AnalizadorSintactico(AnalizadorLexico scanner, AnalizadorSemantico semantic, GeneradorDeCodigo gen) {
         this.lex = scanner;
-        this.semantica = semantic;
+        this.asem = semantic;
         this.genCod = gen;
-        cantVariables = 0;
+        cantVariablesDeclaradas = 0;
+        this.huboHant = false;
     }
 
     private void mostrarError(Errores.erroresEnum enumError, Token token) {
@@ -36,51 +33,75 @@ public class AnalizadorSintactico {
 
     public void programa() throws IOException {
         // Primero cargo EDI EN O para que apunte a la inicializacion de las varibless
-        genCod.cargarInicializacionRegistroEDI();
+        genCod.cargarEDI();
+        System.out.println("EDI cargado");
         //Me guardo la direccion donde arranco 
-        int direccionEDI = genCod.obtenerPosicion();
+        if (!huboHant) {
+            bloque(0);
+            if (this.token.getValor().equals(".")) {
+                leerProximoToken();
+            } else {
+                mostrarError(Errores.erroresEnum.FALTA_PTO, this.token);
+            }
+            if (!token.esEOF()) {
+                mostrarError(Errores.erroresEnum.FALTA_EOF, this.token);
 
-        bloque(0);
-        if (this.token.getValor().equals(".")) {
-           
-            leerProximoToken();
-            this.genCod.generarArchivoExe();
-
-        } else {
-            mostrarError(Errores.erroresEnum.DESCONOCIDO, this.token);
+            }
         }
+        genCod.finalDePrograma(cantVariablesDeclaradas);
+        genCod.generarArchivoExe();
+        System.out.println("\nArchivo generado en " + genCod.getFileOutPath() + ".exe");
     }
 
     private void bloque(int base) throws IOException {
-        scope = "DECLARACION";
         int desplazamiento = 0;
-        genCod.cargarJMP(0);
-        int comienzoBloque = genCod.obtenerPosicion();
+        genCod.reservarJUMP_E9____(); // Se reserva un JUMP para el bloque y se rellena antes de la proposición E9 _ _
+        // _ _ (5 bytes)
+
+        int comienzoBloque = genCod.getPosicionActual();
+        RegistroSemantico identificador = null;
+
+        //CONSTANTE
         if (this.token.esConstrante()) {
-            String nomCte = "";
+            Boolean esNegado = false;
             leerProximoToken();
+
             if (this.token.esIdentificador()) {
-                nomCte = this.token.getValor();
+                identificador = new RegistroSemantico(TipoIdentificador.CONST, token.getValor());
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
+
             if (this.token.getValor().equals("=")) {
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IGUAL, this.token);
             }
+            if (this.token.getValor().equals("-")) {
+                esNegado = true;
+                leerProximoToken();
+            }
+
             if (this.token.esNumero()) {
-                semantica.agregar(nomCte, "CONST", Integer.parseInt(this.token.getValor()), base, desplazamiento, scope);
-                desplazamiento++;
+                if (esNegado) {
+                    int tokenNegado = Integer.parseInt(token.getValor());
+                    identificador.setValor(tokenNegado * -1);
+                    esNegado = false;
+                } else {
+                    identificador.setValor(Integer.parseInt(token.getValor()));
+                }
+                asem.declarar(identificador, base, base + desplazamiento++);
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
             }
+
             while (token.getValor().equals(",")) {
+                esNegado = false;
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
-                    nomCte = this.token.getValor();
+                    identificador = new RegistroSemantico(TipoIdentificador.CONST, token.getValor());
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -90,9 +111,18 @@ public class AnalizadorSintactico {
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_IGUAL, this.token);
                 }
+
                 if (this.token.esNumero()) {
-                    semantica.agregar(nomCte, "CONST", Integer.parseInt(this.token.getValor()), base, desplazamiento, scope);
-                    desplazamiento++;
+                    int tk = Integer.parseInt(this.token.getValor());
+
+                    if (esNegado) {
+                        identificador.setValor(tk * -1);
+                        esNegado = false;
+                    } else {
+                        identificador.setValor(tk);
+                    }
+                    identificador.setValor(Integer.parseInt(token.getValor()));;
+                    asem.declarar(identificador, base, base + desplazamiento++);
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
@@ -107,12 +137,14 @@ public class AnalizadorSintactico {
 
         } //FIN CONSTANTE
 
+        //VAR
         if (this.token.getValor().equals("VAR")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
-                cantVariables++;
-                semantica.agregar(this.token.getValor(), "VAR", this.cantVariables * 4, base, desplazamiento, scope);
-                desplazamiento++;
+                identificador = new RegistroSemantico(TipoIdentificador.VAR, token.getValor(), cantVariablesDeclaradas++);
+
+                asem.declarar(identificador, base, base + desplazamiento++);
+                
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -121,8 +153,9 @@ public class AnalizadorSintactico {
             while (token.getValor().equals(",")) { //while var ident, ident ;
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
-                    semantica.agregar(this.token.getValor(), "VAR", this.cantVariables * 4, base, desplazamiento, scope);
-                    desplazamiento++;
+                    identificador = new RegistroSemantico(TipoIdentificador.VAR, token.getValor(), cantVariablesDeclaradas++);
+                    asem.declarar(identificador, base, base + desplazamiento++);
+                    
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -134,14 +167,14 @@ public class AnalizadorSintactico {
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA, this.token);
             }
-        } //fin VAR
+        } //fin CONST
 
+        //PROCEDURE
         while (token.getValor().equals("PROCEDURE")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
-                int posMemo = this.genCod.obtenerPosicion();
-                semantica.agregar(this.token.getValor(), "PROCEDURE", posMemo, base, desplazamiento, scope);
-                desplazamiento++;
+                identificador = new RegistroSemantico(TipoIdentificador.PROCEDURE, token.getValor(), genCod.getPosicionActual());
+                asem.declarar(identificador, base, base + desplazamiento++);
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -151,34 +184,45 @@ public class AnalizadorSintactico {
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
+
+            System.out.println("Reservado el JUMP para PROCEDURE " + identificador.getNombre() + " --> "
+                    + genCod.toHexa(comienzoBloque - 4)); // -4 porque actualmente estoy parado en el último byte de la
+            // instrucción E9 _ _ _ x <--
+
             bloque(desplazamiento + base);
 
-            // Al finalizar el bloque de este procedimiento se agrega un RET
-            genCod.cargarByte(0xC3);
+            genCod.ret_C3(); // Al finalizar el bloque de este procedimiento se agrega un RET
 
             if (this.token.getValor().equals(";")) {
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA, this.token);
             }
-        } //FIN WHILE
+        } //FIN WHILE PROCEDURE
 
-        int finaleBloque = genCod.obtenerPosicion();
+        int finaleBloque = genCod.getPosicionActual();
         System.out.println("\nFinal de bloque. Actualizamos el JUMP del inicio del bloque actual:");
-        genCod.cargarIntEn(finaleBloque - comienzoBloque, (comienzoBloque - 4)); // Se llena el JUMP reservado al comienzo del bloque calculando la distancia entre la posición actual y el comienzo del bloque. Se carga en la posición del comienzoBloque - 4 para quedar despues del E9
+        genCod.cargarIntEn(finaleBloque - comienzoBloque, (comienzoBloque - 4)); // Se llena el JUMP reservado al
+        // comienzo del bloque calculando la
+        // distancia entre la posición actual y
+        // el comienzo del bloque. Se carga en
+        // la posición del comienzoBloque - 4
+        // para quedar despues del E9
 
-        proposicion(base, desplazamiento);
+        proposicion(desplazamiento + base);
+
     } // FIN FUNCION BLOQUE
 
     //A PARTIR DE ACA SOLO USO LOS IDENTIFICADORES PARA BUSCARLOS NO LOS DECLARO
-    private void proposicion(int base, int desplazamiento) throws IOException {
-        scope = "BUSQUEDA";
-        ArrayList<String> tiposEsperados = new ArrayList<>();
+    private void proposicion(int hasta) throws IOException {
+        RegistroSemantico identificador;
 
         if (this.token.esIdentificador()) {
-            tiposEsperados.add("VAR");
-            this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
-            int valorVar = semantica.getValorRegistro(this.token.getValor(), base, desplazamiento, scope);
+            genCod.mostrarInicioDeProposicion("ASIGNAR (" + token + ")");
+            identificador = AnalizadorSemantico.buscar(token.getValor(), hasta, 0);
+            if (!identificador.getTipo().equals(TipoIdentificador.VAR)) {
+                mostrarError(Errores.erroresEnum.FALTA_VAR, this.token);
+            }
 
             leerProximoToken();
             if (this.token.getValor().equals(":=")) {
@@ -186,134 +230,191 @@ public class AnalizadorSintactico {
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_ASIGNACION, this.token);
             }
-            expresion(base, desplazamiento);
+            expresion(hasta);
+            genCod.asignarAVariable(identificador.getValor() * 4); // Se multiplica por 4 porque cada variable ocupa 4
+            // bytes
 
-            // muevo el valor de la pila a la memoria donde esta el identificador
-            //saco el numero de la pila pop eax, mov[edi +posicion de la variable],eax
-            genCod.cargarIdent(valorVar);
+            genCod.mostrarFinalDeProposicion("ASIGNAR");
+
+        }
+        if (this.token.getValor().equals("HALT")) {
+            huboHant = true;
+            return;
         }
         if (this.token.getValor().equals("CALL")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
-                tiposEsperados.clear();
-                tiposEsperados.add("PROCEDURE");
-                this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
-                //BUSCO EL VALOR DONDE ESTA EN MEMORIA EL PROCEDIMIENTO 
-                int posMemoriaProcedure = semantica.getValorRegistro(this.token.getValor(), base, desplazamiento, scope);
-                genCod.cargarCallDeProcedimiento(posMemoriaProcedure);
+                AnalizadorSemantico.validarTipo(token.getValor(), TipoIdentificador.PROCEDURE, hasta);
+                identificador = asem.buscar(token.getValor(), hasta, 0);
+                int posicionActual = genCod.getPosicionActual();
+                int puntoSalto = identificador.getValor() - (posicionActual + 5); // Valor del procedimiento - (posición
+                // actual + 5 bytes)
 
+                genCod.mostrarInicioDeProposicion("CALL (" + token + ")");
+                genCod.callA_E8_____(puntoSalto); // Llama al procedimiento en la posición donde fue declarado
+                genCod.mostrarFinalDeProposicion("CALL");
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
         }
         if (this.token.getValor().equals("BEGIN")) {
+            genCod.mostrarInicioDeProposicion("BEGIN");
+
             leerProximoToken();
-            proposicion(base, desplazamiento);
+            proposicion(hasta);
+            if (this.token.getValor().equals("HALT")) {
+                return;
+            }
             while (this.token.getValor().equals(";")) {
                 leerProximoToken();
-                proposicion(base, desplazamiento);
+                proposicion(hasta);
             }
             if (this.token.getValor().equals("END")) {
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_END, this.token);
             }
+            genCod.mostrarFinalDeProposicion("BEGIN");
         }
         if (this.token.getValor().equals("IF")) {
+            // IF (cond) [inicioProposicion] THEN (proposicion) [finProposicion]
+            genCod.mostrarInicioDeProposicion("IF");
             leerProximoToken();
-            condicion(base, desplazamiento);
-            //insetar JMP 00
-            //genCod.cargarByte(0xE9);
-            //genCod.cargarInt(valor);                                                    
-            //En el caaso del if, directamente hago un salto despues de la proposicion si la condicion es falsa.            
-            //guardar en una variable local el .size, la posicion donde esta despues del JMP 00
+
+            condicion(hasta);
+
             if (this.token.getValor().equals("THEN")) {
                 leerProximoToken();
-                int inicioDeProposicion = genCod.obtenerPosicion();
-
-                proposicion(base, desplazamiento);
-                int finDeProposicion = genCod.obtenerPosicion();
-                //FIX UP de la posicion del salto del condicion. En este caso el salto es a despues de la proposicion
-                //guardar el .size en una variable y guardar la posicion en la variable local -4
-                int distanciaDeSalto = finDeProposicion - inicioDeProposicion; // Se calcula la distancia entre el inicio de la proposición y el final de la proposición para luego cargarla en el JUMP
-
-                genCod.cargarIntEn(distanciaDeSalto, inicioDeProposicion - 4);
-                // genCod.cargarSaltosCondicionales(finCondicionIF);
-
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_THEN, this.token);
             }
+            int inicioDeProposicion = genCod.getPosicionActual();
+            this.proposicion(hasta);
+            int finDeProposicion = genCod.getPosicionActual();
+
+            int distanciaDeSalto = finDeProposicion - inicioDeProposicion; // Se calcula la distancia entre el
+            // inicio de la proposición y el final de
+            // la proposición para luego cargarla en
+            // el JUMP
+
+            genCod.cargarIntEn(distanciaDeSalto, inicioDeProposicion - 4); // Se carga la distancia en el JUMP
+            // reservado al inicio de la proposición
+            // (el JUMP se encuentra en la condición)
+            // - 4 para quedar despues del JUMP E9
+
+            genCod.mostrarFinalDeProposicion("IF");
         }
         if (this.token.getValor().equals("WHILE")) {
+            // WHILE [inicioCondicion] (condicion) [finCondicion] DO (proposicion)
+            // [finProposicion]          
+            genCod.mostrarInicioDeProposicion("WHILE");
+
             leerProximoToken();
-            //guardar la posicion con el size antes de evaluar la condicion para volver despues de la proposicion
-            int inicioCondicionWhile = genCod.obtenerPosicion();
-
-            condicion(base, desplazamiento);
-
-            int finCondicionWhile = genCod.obtenerPosicion();
+            int inicioCondicion = genCod.getPosicionActual(); // Aca se vuelve para volver a evaluar la condicion (happy path)
+            this.condicion(hasta); // TERMINA CON UN E9 _ _ _ _ (5 bytes) que se salta a la proposición
+            int finCondicion = genCod.getPosicionActual(); // Esto me sirve para corregir el jump anterior (que se encuentra
+            // en el final de la condicion) Estoy E9 _ _ _ _ x <-
 
             if (this.token.getValor().equals("DO")) {
                 leerProximoToken();
-                proposicion(base, desplazamiento);
-
-                //cargar otro salto para atras
-                int finProposicion = genCod.obtenerPosicion() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5 bytes;
-                int distanciaDeSalto = inicioCondicionWhile - finProposicion;
-                // SALTO condicional para volver a evaluar la condicion
-                genCod.cargarJMP(distanciaDeSalto);
-                // FIX UP, si condicion es falsa salto al fin de la proposicion
-                int distanciaSalto = finProposicion - finCondicionWhile;
-                // le resto 4 para sobreescribir los 0 puestos en el jmp
-                genCod.cargarIntEn(distanciaSalto, finCondicionWhile - 4); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
-
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_DO, this.token);
             }
+            this.proposicion(hasta);
+            int finProposicion = genCod.getPosicionActual() + 5; // Se suma 5 porque el siguiente JUMP E9 _ _ _ _ ocupa 5
+            // bytes
+
+            genCod.jumpA_E9____(inicioCondicion - finProposicion); // Vuelve a la condición para evaluarla
+            // nuevamente (happy path)
+
+            int distanciaSalto = finProposicion - finCondicion;
+            genCod.cargarIntEn(distanciaSalto, finCondicion - 4); // Se carga la distancia en el JUMP reservado al
+            // final de la condición - 4 para quedar despues
+            // del JUMP E9
+
+            genCod.mostrarFinalDeProposicion("WHILE");
+
         }
-        if (this.token.getValor().equals("READLN")) {
+        if (this.token.getValor().equals("FOR")) {
+            genCod.mostrarInicioDeProposicion("FOR");
+
             leerProximoToken();
-            if (this.token.getValor().equals("(")) {
-                leerProximoToken();
-            } else {
-                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
-            }
 
-            if (this.token.esIdentificador()) {
-                tiposEsperados.clear();
-                tiposEsperados.add("VAR");
-                tiposEsperados.add("CONST");
-                this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
-
-                int valorVariable = semantica.getValorRegistro(this.token.getValor(), base, desplazamiento, scope);
-                genCod.cargaConsola(valorVariable);
-
-                leerProximoToken();
-            } else {
+            if (!this.token.esIdentificador()) {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
             }
+            String nombreVar = token.getValor();
 
-            while (this.token.getValor().equals(",")) {
-                leerProximoToken();
-                if (this.token.esIdentificador()) {
-                    tiposEsperados.clear();
-                    tiposEsperados.add("VAR");
-                    tiposEsperados.add("CONST");
-                    this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
+            this.proposicion(hasta);
 
-                    int valorVariable = semantica.getValorRegistro(this.token.getValor(), base, desplazamiento, scope);
-                    genCod.cargaConsola(valorVariable);
+            if (!this.token.getValor().equals("TO")) {
+                mostrarError(Errores.erroresEnum.FALTA_TO, this.token);
+            }
+            leerProximoToken();
+
+            if (!this.token.esNumero()) {
+                mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
+            }
+            int repetirHasta = Integer.parseInt(this.token.getValor());
+            leerProximoToken();
+
+            if (!this.token.getValor().equals("DO")) {
+                mostrarError(Errores.erroresEnum.FALTA_DO, this.token);
+            }
+            leerProximoToken();
+
+            int inicioDeFor = genCod.getPosicionActual();
+
+            identificador = AnalizadorSemantico.buscar(nombreVar, hasta, 0);
+            genCod.cargarFor(identificador.getValor() * 4, repetirHasta);
+            // JUMP E9 _ _ _ _
+
+            int inicioProposicionFor = genCod.getPosicionActual();
+            this.proposicion(hasta);
+            int finProposicionFor = genCod.getPosicionActual();
+
+            int distanciaSaltoFor = (finProposicionFor + 29) - inicioProposicionFor; // 29 = Corrección de todo lo que viene después
+
+            genCod.cargarIntEn(distanciaSaltoFor, inicioProposicionFor - 4);
+
+            genCod.aumentarUno(identificador.getValor() * 4);
+
+            genCod.jumpA_E9____(inicioDeFor - (genCod.getPosicionActual() + 5));
+
+            genCod.mostrarFinalDeProposicion("FOR");
+        }
+
+        if (this.token.getValor().equals("READLN")) {
+            leerProximoToken();
+
+            if (this.token.getValor().equals("(")) {
+
+                do {
+                    leerProximoToken();
+                    identificador = AnalizadorSemantico.buscar(this.token.getValor(), hasta, 0);
+                    if (!identificador.getTipo().equals(TipoIdentificador.VAR)) {
+                        mostrarError(Errores.erroresEnum.FALTA_VAR, this.token);
+                    }
+
+                    genCod.cargarReadLn(identificador.getValor() * 4); // Se carga la dirección de la variable en la
+                    // que se guardará el valor leído. Se
+                    // multiplica por 4 porque cada variable
+                    // ocupa 4 bytes
 
                     leerProximoToken();
-                } else {
-                    mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
-                }
-            }
-            if (this.token.getValor().equals(")")) {
-                leerProximoToken();
+                    if (!this.token.getValor().equals(",")) {
+                        if (this.token.getValor().equals(")")) {
+                            leerProximoToken();
+                        } else {
+                            mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+                        }
+                    }
+
+                } while (this.token.getValor().equals(","));
+
             } else {
-                mostrarError(Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA, this.token);
+                mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
             }
         }
         if (this.token.getValor().equals("WRITE")) {
@@ -323,204 +424,161 @@ public class AnalizadorSintactico {
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
             }
-            if (this.token.esCadena()) {
-                genCod.cargarCadena(this.token.getValor());
-
-                leerProximoToken();
-            } else {
-                expresion(base, desplazamiento);
-                // POP EAX
-                // llamar a call 0420 
-                genCod.cargarResultadoExpresion();
-            }
-            while (this.token.getValor().equals(",")) {
-                leerProximoToken();
-                if (this.token.esCadena()) {
-                    genCod.cargarCadena(this.token.getValor());
-
-                    leerProximoToken();
-                } else {
-                    expresion(base, desplazamiento);
-                    // POP EAX
-                    // llamar a call 0420 
-                    genCod.cargarResultadoExpresion();
-                }
-            }
-            if (this.token.getValor().equals(")")) {
-                leerProximoToken();
-            } else {
-                mostrarError(Errores.erroresEnum.FALTA_CADENA_FACTOR_IDENT_PARA, this.token);
-            }
+            bucleWrite(hasta);
         }
         if (this.token.getValor().equals("WRITELN")) {
             leerProximoToken();
             if (this.token.getValor().equals("(")) {
                 leerProximoToken();
-                if (this.token.esCadena()) {
-                    genCod.cargarCadena(this.token.getValor());
-
-                    leerProximoToken();
-                } else {
-                    expresion(base, desplazamiento);
-                    // POP EAX
-                    // llamar a call 0420 
-                    genCod.cargarResultadoExpresion();
-                }
-                while (this.token.getValor().equals(",")) {
-                    leerProximoToken();
-                    if (this.token.esCadena()) {
-                        genCod.cargarCadena(this.token.getValor());
-
-                        leerProximoToken();
-                    } else {
-                        expresion(base, desplazamiento);
-                        // POP EAX
-                        // llamar a call 0420 
-                        genCod.cargarResultadoExpresion();
-                    }
-                }
-                if (this.token.getValor().equals(")")) {
-                    leerProximoToken();
-                    //salto de linea call 0410
-                    genCod.cargarSaltoDeLinea();
-                } else {
-                    mostrarError(Errores.erroresEnum.FALTA_FACTOR_IDENT_PARA, this.token);
-                }
-
+                bucleWrite(hasta);
             }
+            genCod.writeln();
         }
     } //FIN PROPOSICION
 
-    private void condicion(int base, int desplazamiento) throws IOException {
-        scope = "BUSQUEDA";
+    private void condicion(int hasta) throws IOException {
+        TipoToken operador = null;
         if (this.token.getValor().equals("ODD")) {
             leerProximoToken();
-            expresion(base, desplazamiento);
-            genCod.cargarExpresionODD();
-
+            expresion(hasta);
+            genCod.generarOdd();
             return;
-        }
-        expresion(base, desplazamiento);
-        if (this.token.esSignoCondicion()) {
-            switch (this.token.getValor()) {
-                case "=" -> {
-                    //break;
-                }
-                case "<>" -> {
-                    // break;
-                }
-                case "<" -> {
-                    // break;
-                }
-                case "<=" -> {
-                    // break;
-                }
-                case ">" -> {
-                    //  break;
-                }
-                case ">=" -> {
-                    // break;
-                }
-            }
-            leerProximoToken();
         } else {
-            mostrarError(Errores.erroresEnum.FALTA_SIGNO_COND, this.token);
+            expresion(hasta);
+            if (this.token.esSignoCondicion()) {
+                switch (this.token.getValor()) {
+                    case "=" -> {
+                        operador = TipoToken.IGUAL;
+                    }
+                    case "<>" -> {
+                        operador = TipoToken.DIFERENTE;
+                    }
+                    case "<" -> {
+                        operador = TipoToken.MENOR;
+                    }
+                    case "<=" -> {
+                        operador = TipoToken.MENOR_O_IGUAL;
+                    }
+                    case ">" -> {
+                        operador = TipoToken.MAYOR;
+                    }
+                    case ">=" -> {
+                        operador = TipoToken.MAYOR_O_IGUAL;
+                    }
+                }
+                leerProximoToken();
+            } else {
+
+                mostrarError(Errores.erroresEnum.FALTA_SIGNO_COND_ODD, this.token);
+
+            }
         }
-        expresion(base, desplazamiento);
-        genCod.cargarCondicion(this.token.getValor());
+        expresion(hasta);
+        genCod.generarExpresionCondicional(operador);
     }
 
-    private void expresion(int base, int desplazamiento) throws IOException {
-        scope = "BUSQUEDA";
-        if (token.esSignoExpresion()) {
+    private void expresion(int hasta) throws IOException {
+        String operador = token.getValor();
 
-            switch (this.token.getValor()) {
-                case "+" -> {
-                    //  break;
-                }
-                case "-" -> {
-                    genCod.negarTermino();
-                }
+        if (token.esSignoExpresion()) {
+            if (this.token.getValor().equals("-")) {
+                genCod.negarTermino();
             }
             leerProximoToken();
         }
-
-        termino(base, desplazamiento);
+        termino(hasta);
 
         while (token.esSignoExpresion()) {
-            switch (this.token.getValor()) {
+            operador = token.getValor();
+            leerProximoToken();
+            termino(hasta);
+            switch (operador) {
                 case "+" -> {
-                    genCod.cargarSuma();
+                    genCod.generarSumar();
                 }
                 case "-" -> {
-                    genCod.cargarResta();
+                    genCod.generarRestar();
                 }
             }
-            leerProximoToken();
-            termino(base, desplazamiento);
         }
-
     }
 
-    private void termino(int base, int desplazamiento) throws IOException {
-        scope = "BUSQUEDA";
-        factor(base, desplazamiento);
+    private void termino(int hasta) throws IOException {
+        factor(hasta);
         while (this.token.esSignoTermino()) {
-            switch (this.token.getValor()) {
+            String operador = this.token.getValor();
+            leerProximoToken();
+            factor(hasta);
+            switch (operador) {
                 case "*" -> {
-                    genCod.cargarMultiplicacion();
+                    genCod.generarMultiplicacion();
                 }
                 case "/" -> {
-                    genCod.cargarDivision();
+                    genCod.generarDividicion();
                 }
             }
-            leerProximoToken();
-            factor(base, desplazamiento);
         }
-
     }
 
-    private void factor(int base, int desplazamiento) throws IOException {
-        scope = "BUSQUEDA";
-        ArrayList<String> tiposEsperados = new ArrayList<>();
-        if (this.token.esIdentificador()) {
-            tiposEsperados.clear();
-            tiposEsperados.add("VAR");
-            tiposEsperados.add("CONST");
-            this.semantica.busquedaYchequeo(this.token.getValor(), base, desplazamiento, tiposEsperados, scope, this.token);
-
-            //si es una constante es el valor de la misma, si es variable tiene la cant de variables * 4
-            int valor = this.semantica.getValorRegistro(this.token.getValor(), base, desplazamiento, scope);
-
-            if (this.token.getTipo().equals("CONST")) {
-
-                genCod.cargarConst(valor);
-            } else {
-                genCod.cargarVar(valor);
-            }
-            //identificar si es variable o constante para cargar en el generador de codigo
-            //si es const B8 
-            //si es var 8B 87
-            //cargo el push eax -> 50
-            leerProximoToken();
-        }
-        if (this.token.esNumero()) {
-            // cargo el numero con mov eax, _____
-            //cargo el push eax ->50
-            genCod.cargarNumero(token.getValor());
-            leerProximoToken();
-        }
+    private void factor(int hasta) throws IOException {
         // NO SE GENERA EL CODIGO ACA, SE GENERA EN EXPRESION
-
         if (this.token.getValor().equals("(")) {
             leerProximoToken();
-            expresion(base, desplazamiento);
+            expresion(hasta);
             if (this.token.getValor().equals(")")) {
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
             }
+            leerProximoToken();
         }
+        if (this.token.esIdentificador()) {
+            RegistroSemantico identificador = AnalizadorSemantico.buscar(token.getValor(), hasta, 0);
+
+            if (this.token.getTipo().equals("CONST")) {
+                genCod.cargarDireccionamientoInmediato_B8(identificador.getValor());
+                genCod.pushEAX_50();
+            }
+            if (this.token.getTipo().equals("VAR")) {
+                genCod.cargarDireccionamientoIndexado_8B_87(identificador.getValor() * 4);
+                genCod.pushEAX_50();
+            }
+        } else if (this.token.esNumero()) {
+            // cargo el numero con mov eax, _____
+            //cargo el push eax ->50
+            genCod.cargarDireccionamientoInmediato_B8(Integer.parseInt(token.getValor()));
+            genCod.pushEAX_50();
+        } else {
+            mostrarError(Errores.erroresEnum.FALTA_IDENT_NUMERO, this.token);
+        }
+        leerProximoToken();
+
+    }
+
+    private void bucleWrite(int hasta) throws IOException {
+        if (this.token.esCadena()) {
+            genCod.writeCadena(token.getValor());
+            leerProximoToken();
+        } else {
+            this.expresion(hasta);
+            genCod.writeEntero();
+        }
+
+        while (this.token.getValor().equals(",")) {
+            leerProximoToken();
+            if (this.token.esCadena()) {
+                genCod.writeCadena(token.getValor());
+                leerProximoToken();
+            } else {
+                this.expresion(hasta);
+                genCod.writeEntero();
+            }
+        }
+
+        if (!this.token.getValor().equals(")")) {
+            mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
+        }
+        leerProximoToken();
     }
 
 }

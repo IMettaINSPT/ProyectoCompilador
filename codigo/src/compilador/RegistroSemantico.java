@@ -1,35 +1,48 @@
 package compilador;
 
 public class RegistroSemantico {
-    private final String _nombre;
-    private  int _valor;
-    private final String _tipo;
 
-    /**
- *
- *
- * @param nombre.
- * @param tipo.
- * @param valor .
- */
-    public RegistroSemantico(String nombre,String tipo, int valor) {
-        this._nombre = nombre;
-        this._tipo = tipo;
-        this._valor = valor;
+
+    private TipoIdentificador tipo;
+    private String nombre;
+    private Integer valor;
+
+    public RegistroSemantico(TipoIdentificador tipo) {
+        this.tipo = tipo;
+    }
+
+    public RegistroSemantico(TipoIdentificador tipo, String nombre) {
+        this.tipo = tipo;
+        this.nombre = nombre;
+    }
+
+    public RegistroSemantico(TipoIdentificador tipo, String nombre, Integer valor) {
+        this.tipo = tipo;
+        this.nombre = nombre;
+        this.valor = valor;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setValor(Integer valor) {
+        this.valor = valor;
     }
 
     public String getNombre() {
-        return _nombre;
+        return nombre;
     }
 
-    public int getValor() {
-        return _valor;
+    public TipoIdentificador getTipo() {
+        return tipo;
     }
 
-    public String getTipo() {
-        return _tipo;
+    public Integer getValor() {
+        return valor;
     }
-    public void setValor(int _valor) {
-        this._valor = _valor;
+
+    public String toString() {
+        return "------------------------------------------------\nIdentificador: " + tipo + " " + nombre + " = " + valor + "\n------------------------------------------------";
     }
 }

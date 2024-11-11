@@ -4,65 +4,79 @@ import java.util.ArrayList;
 
 public class AnalizadorSemantico {
 
-    RegistroSemantico tablaSemantica[];
+    static RegistroSemantico[] tabla = new RegistroSemantico[Constantes.DECLARACIONES_MAX - 1];    
     String arhivoSalidaLog;
+    static int posicion = 0;
 
     public AnalizadorSemantico(String archSalidaLog) {
-        tablaSemantica = new RegistroSemantico[1024];
         this.arhivoSalidaLog = archSalidaLog;
     }
 
-    public void agregar(String identificador, String tipoIdent, int valorIdent, int base, int desplazamiento, String scope) {
-        RegistroSemantico aux = leer(identificador, base, desplazamiento, scope);
-        if (aux != null) {
-            Errores.mostrarError(Errores.erroresEnum.IDENTIFICADOR_DUPLICADO, new Token(identificador, identificador), this.arhivoSalidaLog);
+    public void declarar(RegistroSemantico identificador, int desde, int hasta) {
+        validarPosicion();
 
-            tablaSemantica[base + desplazamiento] = new RegistroSemantico(identificador, tipoIdent, valorIdent);
+        RegistroSemantico encontrado = buscar(identificador.getNombre(), hasta, desde);
+
+        if (encontrado != null) {
+            System.out.println("Error: El identificador " + identificador.getNombre()
+                    + " ya ha sido declarado");
+            System.exit(1);
+        }
+
+        tabla[hasta] = identificador;
+        // System.out.println(hasta + identificador.toString());
+    }
+
+    static void validarTipo(String token, TipoIdentificador tipo, int hasta) {
+        RegistroSemantico identificador = buscar(token, hasta, 0);
+        switch (tipo) {
+            case TipoIdentificador.CONST:
+                if (!identificador.getTipo().equals(TipoIdentificador.CONST)) {
+                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
+                    System.exit(1);
+                }
+                break;
+            case TipoIdentificador.VAR:
+                if (!identificador.getTipo().equals(TipoIdentificador.CONST)
+                        && !identificador.getTipo().equals(TipoIdentificador.VAR)) {
+                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
+                    System.exit(1);
+                }
+                break;
+            case TipoIdentificador.PROCEDURE:
+                if (!identificador.getTipo().equals(TipoIdentificador.PROCEDURE)) {
+                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
+                    System.exit(1);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
-    public int getValorRegistro(String identificador, int base, int desplazamiento, String scope) {
-            return leer(identificador, base, desplazamiento, scope).getValor();        
+    static void mostrarMensajeDeError(String token, TipoIdentificador tipoEsperado, TipoIdentificador tipoRecibido) {
+        System.err.println("Error: " + token + " es del tipo " + tipoRecibido + " pero se esperaba " + tipoEsperado);
     }
 
-    private RegistroSemantico leer(String identificador, int base, int desplazamiento, String scope) {
-        if (scope.equals("DECLARACION")) {
-            for (int i = base; i <= (base + desplazamiento - 1); i++) {
-                if (tablaSemantica[i].getNombre().equals(identificador)) {
-                    return tablaSemantica[i];
-                }
-            }
-        } else {
-            for (int i = (base + desplazamiento - 1); i >= 0; i--) {
-                if (tablaSemantica[i].getNombre().equals(identificador)) {
-                    return tablaSemantica[i];
-                }
+    static RegistroSemantico buscar(String token, int desde, int hasta) {
+        for (int i = desde-1; i >= hasta; i--) {
+            if (tabla[i].getNombre().equals(token)) {
+                return tabla[i];
             }
         }
         return null;
-
     }
 
-    public boolean busquedaYchequeo(String identificador, int base, int desplazamiento, ArrayList<String> tipoIdentificadoresEsperados, String scope, Token tokenIdent) {
-        RegistroSemantico aux = leer(identificador, base, desplazamiento, scope);
-        String tipos = "";
-        if (aux == null) {
-            Errores.mostrarError(Errores.erroresEnum.IDENTIFICADOR_NOIDENTIFICADO, tokenIdent, arhivoSalidaLog);
+    static int getSize() {
+        return posicion;
+    }
+
+    private void validarPosicion() {
+        if (posicion >= Constantes.DECLARACIONES_MAX - 1) {
+            System.out.println(
+                    "Error: Se ha alcanzado el límite de declaraciones (" + Constantes.DECLARACIONES_MAX + ")");
+            System.exit(1);
         }
-
-        for (int i = 0; i < tipoIdentificadoresEsperados.size(); i++) {
-            if (i > 0) {
-                tipos += ",";
-            }
-            tipos += tipoIdentificadoresEsperados.get(i);
-
-            if (tipoIdentificadoresEsperados.get(i).equals(aux.getTipo())) {
-                return true;
-            }
-        }
-        tokenIdent.setTiposEsperados(tipos);
-        Errores.mostrarError(Errores.erroresEnum.TIPO_IDENT_ERROR, tokenIdent, arhivoSalidaLog);
-
-        return false;
     }
 }

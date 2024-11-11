@@ -14,7 +14,7 @@ public class AnalizadorLexico {
     private FileReader lector;
     private FileOutputStream escritor;
     private char caracter;
-    private String pathFile ;
+    private String pathFile;
     private int ultimoCaracterLeido = -1; // Almacena el último carácter leído
 
     // Conjuntos de palabras reservadas y símbolos del lenguaje PL/0
@@ -38,6 +38,7 @@ public class AnalizadorLexico {
         PALABRAS_RESERVADAS.add("READLN");
         PALABRAS_RESERVADAS.add("WRITE");
         PALABRAS_RESERVADAS.add("WRITELN");
+        PALABRAS_RESERVADAS.add("HALT");
 
         // Inicialización de símbolos del lenguaje PL/0
         SIMBOLOS.add('+');
@@ -92,7 +93,7 @@ public class AnalizadorLexico {
         }
 
         if (ch == -1) {
-            return new Token("EOF", "EOF");
+            return new Token(TipoToken.EOF, "EOF");
             //   return "EOF";
         } else {
             char currentChar = (char) ch;
@@ -108,7 +109,8 @@ public class AnalizadorLexico {
                     ultimoCaracterLeido = ch;
 
                 }
-                return new Token("SIMBOLOS", cadena);
+
+                return new Token(identificarSimbolo(cadena), cadena);
                 // return "SIMBOLOS: " + cadena;
             }
 
@@ -119,24 +121,29 @@ public class AnalizadorLexico {
                     cadena += currentChar;
                     if (currentChar == '\'') {
                         ultimoCaracterLeido = -1;
-                        return new Token("CADENA", cadena);
+                        //tecnicamente seria un palabra reservada y simbolo de puntuacion.
+                        if (cadena.equals("ODD")) {
+                            return new Token(TipoToken.ODD, cadena);
+                        }
+
+                        return new Token(TipoToken.CADENA, cadena);
                     }
                     if (System.lineSeparator().equals(ch)) {
                         ultimoCaracterLeido = -1;
-                        return new Token("DESCONOCIDO", cadena);
+                        return new Token(TipoToken.DESCONOCIDO, cadena);
                     }
                 }
                 if (System.lineSeparator().equals(ch)) {
                     ultimoCaracterLeido = -1;
-                    return new Token("DESCONOCIDO", cadena);
+                    return new Token(TipoToken.DESCONOCIDO, cadena);
                 }
 
                 if (ch == -1) {
                     ultimoCaracterLeido = -1;
-                    return new Token("DESCONOCIDO", cadena);
+                    return new Token(TipoToken.DESCONOCIDO, cadena);
                 }
                 ultimoCaracterLeido = -1; // Guardar el último carácter leído
-                return new Token("CADENA", cadena);
+                return new Token(TipoToken.CADENA, cadena);
             }
             // Verificar si es una letra o dígito para construir palabras o números
             if (Character.isLetter(currentChar)) {
@@ -149,10 +156,10 @@ public class AnalizadorLexico {
 
                 // Verificar si la palabra es reservada
                 if (PALABRAS_RESERVADAS.contains(cadena.toUpperCase())) {
-                    return new Token("PALABRA RESERVADA", cadena);
+                    return new Token(TipoToken.PALABRA_RESERVADA, cadena);
                     // return "PALABRA RESERVADA: " + cadena;
                 } else {
-                    return new Token("IDENTIFICADOR", cadena);
+                    return new Token(TipoToken.IDENTIFICADOR, cadena);
 
                     //  return "IDENTIFICADOR: " + cadena;
                 }
@@ -165,13 +172,79 @@ public class AnalizadorLexico {
                     cadena += (char) ch;
                 }
                 ultimoCaracterLeido = ch; // Guardar el último carácter leído
-                return new Token("NUMERO", cadena);
+                return new Token(TipoToken.NUMERO, cadena);
 
                 //  return "" + cadena;
             }
 
             // Si el carácter no es reconocido
-            return new Token("NO IDENTIFICADO ", String.valueOf(currentChar)); //"" + currentChar;
+            return new Token(TipoToken.DESCONOCIDO, String.valueOf(currentChar)); //"" + currentChar;
         }
+    }
+
+    private TipoToken identificarSimbolo(String simbolo) {
+        switch (simbolo) {
+            case "=" -> {
+                return TipoToken.IGUAL;
+            }
+            case "<>" -> {
+                return TipoToken.DIFERENTE;
+            }
+            case "<" -> {
+                return TipoToken.MENOR;
+            }
+            case "<=" -> {
+                return TipoToken.MENOR_O_IGUAL;
+            }
+            case ">" -> {
+                return TipoToken.MAYOR;
+            }
+            case ">=" -> {
+                return TipoToken.MAYOR_O_IGUAL;
+            }
+            case "+" -> {
+                return TipoToken.SUMA;
+            }
+            case "-" -> {
+                return TipoToken.RESTA;
+            }
+            case "*" -> {
+                return TipoToken.MULTIPLICACION;
+            }
+            case "/" -> {
+                return TipoToken.DIVISION;
+            }
+            case "(" -> {
+                return TipoToken.PARENTESIS_APERTURA;
+            }
+            case ")" -> {
+                return TipoToken.PARENTESIS_CIERRE;
+            }
+            case "." -> {
+                return TipoToken.PUNTO;
+            }
+            case ":" -> {
+                return TipoToken.DOS_PUNTOS;
+            }
+            case ";" -> {
+                return TipoToken.PUNTO_Y_COMA;
+            }
+            case ":=" -> {
+                return TipoToken.ASIGNACION;
+            }
+            case "ODD" -> {
+                return TipoToken.ODD;
+            }
+            case "CADENA" -> {
+                return TipoToken.CADENA;
+            }
+            case "EOF" -> {
+                return TipoToken.EOF;
+            }
+            default -> {
+                return TipoToken.DESCONOCIDO;
+            }
+        }
+
     }
 }

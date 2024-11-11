@@ -6,16 +6,14 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String nomArchivo = "C:\\INSPT2\\S1\\ProyectoCompilador\\MAL-02.PL0";
+        String nomArchivo = "C:\\INSPT2\\S1\\ProyectoCompilador\\BIEN-00.PL0";
         AnalizadorLexico alex;
         try {
             alex = new AnalizadorLexico(nomArchivo);
 //        Token token;
 //        int numeroLinea = 1;
             AnalizadorSemantico aSem = new AnalizadorSemantico(nomArchivo);
-            GeneradorDeCodigo genCod = new GeneradorDeCodigo(nomArchivo);
-            //   el 0X indica que es un nro en hexa
-            genCod.cargarInt(0XABCDEF01);
+            GeneradorDeCodigo genCod = new GeneradorDeCodigo(nomArchivo.replace(".PL0", ".exe"));
 
             AnalizadorSintactico aSint = new AnalizadorSintactico(alex, aSem, genCod);
 

@@ -1,5 +1,0 @@
-var DOm, X, Y, Q, R;
-
-procedure DIVIDIR;
-var V ^W
-Error :se esperaba una coma o un Punto y coma (;)
