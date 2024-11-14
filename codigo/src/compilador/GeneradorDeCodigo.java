@@ -1821,7 +1821,7 @@ public class GeneradorDeCodigo {
 
     public void generarArchivoExe() {
         try {
-            FileOutputStream archivo = new FileOutputStream(getFileOutPath());
+            FileOutputStream archivo = new FileOutputStream(getFileOutPath().replace(".exe", "_mio.exe"));
             for (byte b : memoria) {
                 archivo.write(b);
             }
@@ -2391,7 +2391,7 @@ public class GeneradorDeCodigo {
         // SizeOfRawData (posiciones 424-427, o 01A8-01AB en hexadecimal)
 
         System.out.println("\n5. Ajustando SizeOfRawData\n");
-        int sizeTextSection = finalDeCodigoCargado - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
+        int sizeTextSection = getPosicionActual() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
         cargarIntEn(sizeTextSection, Constantes.SIZE_OF_RAW_DATA_POSICION);
     }
 

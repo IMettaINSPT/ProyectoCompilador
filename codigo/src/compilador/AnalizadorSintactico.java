@@ -144,7 +144,7 @@ public class AnalizadorSintactico {
                 identificador = new RegistroSemantico(TipoIdentificador.VAR, token.getValor(), cantVariablesDeclaradas++);
 
                 asem.declarar(identificador, base, base + desplazamiento++);
-                
+
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -155,7 +155,7 @@ public class AnalizadorSintactico {
                 if (this.token.esIdentificador()) {
                     identificador = new RegistroSemantico(TipoIdentificador.VAR, token.getValor(), cantVariablesDeclaradas++);
                     asem.declarar(identificador, base, base + desplazamiento++);
-                    
+
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -481,13 +481,14 @@ public class AnalizadorSintactico {
         String operador = token.getValor();
 
         if (token.esSignoExpresion()) {
-            if (this.token.getValor().equals("-")) {
-                genCod.negarTermino();
-            }
+            operador = token.getValor();
             leerProximoToken();
         }
         termino(hasta);
 
+        if (operador.equals("-")) {
+            genCod.negarTermino();
+        }
         while (token.esSignoExpresion()) {
             operador = token.getValor();
             leerProximoToken();
@@ -530,28 +531,30 @@ public class AnalizadorSintactico {
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
             }
-            leerProximoToken();
-        }
-        if (this.token.esIdentificador()) {
+
+        } else if (this.token.esIdentificador()) {
             RegistroSemantico identificador = AnalizadorSemantico.buscar(token.getValor(), hasta, 0);
 
-            if (this.token.getTipo().equals("CONST")) {
+            if (identificador.getTipo() == TipoIdentificador.CONST) {
                 genCod.cargarDireccionamientoInmediato_B8(identificador.getValor());
                 genCod.pushEAX_50();
             }
-            if (this.token.getTipo().equals("VAR")) {
+            if (identificador.getTipo() == TipoIdentificador.VAR) {
                 genCod.cargarDireccionamientoIndexado_8B_87(identificador.getValor() * 4);
                 genCod.pushEAX_50();
             }
+            leerProximoToken();
+
         } else if (this.token.esNumero()) {
             // cargo el numero con mov eax, _____
             //cargo el push eax ->50
             genCod.cargarDireccionamientoInmediato_B8(Integer.parseInt(token.getValor()));
             genCod.pushEAX_50();
+            leerProximoToken();
+
         } else {
             mostrarError(Errores.erroresEnum.FALTA_IDENT_NUMERO, this.token);
         }
-        leerProximoToken();
 
     }
 

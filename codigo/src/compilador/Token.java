@@ -18,6 +18,7 @@ public class Token {
     }
 
     public String getValor() {
+        if(this.Tipo == TipoToken.CADENA){return valor;}
         return valor.toUpperCase();
     }
 
@@ -42,6 +43,7 @@ public class Token {
     public boolean esSignoCondicion() {
         return this.Tipo.equals(TipoToken.MENOR)
                 || this.Tipo.equals(TipoToken.MENOR_O_IGUAL)
+                 || this.Tipo.equals(TipoToken.MAYOR_O_IGUAL)
                 || this.Tipo.equals(TipoToken.MAYOR)
                 || this.Tipo.equals(TipoToken.MAYOR)
                 || this.Tipo.equals(TipoToken.IGUAL)
@@ -49,7 +51,7 @@ public class Token {
     }
 
     public boolean esSignoExpresion() {
-      return this.Tipo.equals(TipoToken.SUMA);
+      return this.Tipo.equals(TipoToken.SUMA) || this.Tipo.equals(TipoToken.RESTA);
     }
 
     public boolean esSignoTermino() {

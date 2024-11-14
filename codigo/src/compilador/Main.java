@@ -6,7 +6,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String nomArchivo = "C:\\INSPT2\\S1\\ProyectoCompilador\\BIEN-00.PL0";
+        String nomArchivo = "C:\\INSPT2\\S1\\ProyectoCompilador\\BIEN-09.PL0";
         AnalizadorLexico alex;
         try {
             alex = new AnalizadorLexico(nomArchivo);
