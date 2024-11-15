@@ -1,0 +1,6 @@
+   1: VAR R, N;
+   2: 
+   3: PROCEDURE INICIALIZAR;
+   4: CONST UNO = ;
+                 ^
+ERROR: Se esperaba un numero

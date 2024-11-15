@@ -1,0 +1,7 @@
+   1: CONST N =20;
+   2: 
+   3: VAR A, B, C;
+   4: 
+   5: PROCEDURE TRI#NGULO;
+                  ^
+ERROR: Se esperaba un punto y coma
