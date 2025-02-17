@@ -30,16 +30,17 @@ public class GeneradorDeCodigo {
     static final int POSICION_ALINEAMIENTO_SECCION = 0xd8;
     static final int POSICION_TAMANO_IMAGEN = 0xf0;
     static final int POSICION_BASE_DATOS = 0xd0;
-    
+    private  String pathFile="";
     
     private int EDI;
 
-    public int getSize() {
+    public int getPosActual() {
         return memoria.size();
     }
 
-    public GeneradorDeCodigo() {
+    public GeneradorDeCodigo(String path) {
         cargarEncabezadosYRutinas();
+        pathFile = path;
     }
 
     public void cargarFinalDelPrograma(int cantVar) {
@@ -59,9 +60,8 @@ public class GeneradorDeCodigo {
 
     public void GenerarArchivo() throws IOException {
         // Volcar el ArrayList en el archivo binario
-FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.exe");
+FileOutputStream archivoWin32 = new FileOutputStream(pathFile.replace(".PL0", ".exe"));
         
-//FileOutputStream archivoWin32 = new FileOutputStream("C:/Users/Fd/Desktop/compilador/archivo00.exe");
 
         for (Byte bytes : memoria) {
             archivoWin32.write(bytes);  // Escribir cada byte en el archivo .exe
@@ -70,11 +70,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
         archivoWin32.close();
         System.out.println("Archivo generado exitosamente");
     }
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //            Operaciones Genrales
-    //
-    ////////////////////////////////////////////////////////////////////////////////////
+  
     public void cargarByte(int valor) {
         memoria.add((byte) valor);
     }
@@ -100,7 +96,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
         memoria.set(posicion + 3, (byte) (valor >> 24));    // Byte mas significativo
     }
 
-    public void cargarPushEAX() {
+    public void cargarPushEAX_50() {
         cargarByte(0x50); //PUSH EAX
     }
 
@@ -108,37 +104,37 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
         cargarByte(0x58); //POP EAX
     }
 
-    public void cargarPopEBX() {
+    public void cargarPopEBX_5B() {
         cargarByte(0x5B); //POP EAX
     }
 
-    public void cargarMovEAX_var(int valor) {
+    public void cargarMovEAX_var_8B_87(int valor) {
         cargarByte(0x8B);
         cargarByte(0x87);
         cargarInt(valor);
     }
 
-    public void cargarMovEAX_num(int valor) {
+    public void cargarMovEAX_num_B8(int valor) {
         cargarByte(0xB8);
         cargarInt(valor);
     }
 
-    public void cargarMovVar_EAX(int valor) {
+    public void cargarMovVar_EAX_89_87(int valor) {
         cargarByte(0x89);
         cargarByte(0x87);
         cargarInt(valor);
     }
 
-    public void cargarXchgEAX_EBX() {
+    public void cargarXchgEAX_EBX_93() {
         cargarByte(0x93);
     }
 
-    public void cargarJMP(int valor) {
+    public void generar_JMP(int valor) {
         cargarByte(0xE9); //JUMP
         cargarInt(valor);  //VALOR DEL JUMP
     }
 
-    public void cargarCALL(int valor) {
+    public void generar_call(int valor) {
         cargarByte(0xE8); //JUMP
         cargarInt(valor);  //VALOR DEL JUMP
     }
@@ -157,67 +153,67 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
     //        OPERACIONES MATEMATICAS: (Expresion)
     //
     //////////////////////////////////////////////////////////////////////
-    public void suma() {
+    public void generar_suma() {
         cargarPopEAX(); //POP EAX
-        cargarPopEBX(); //POP EBX
+        cargarPopEBX_5B(); //POP EBX
         cargarByte(0x01); //ADD EAX, EBX (primer mitad)
         cargarByte(0xD8); //ADD EAX, EBX (segunda mitad)
-        cargarPushEAX();//PUSH EAX
+        cargarPushEAX_50();//PUSH EAX
     }
 
-    public void incrementarEnUno(int valor) {
+    public void incrementar1(int valor) {
 
         generarFactorVar(valor);  //carga la variable a incrementar en la pila
-        cargarMovEAX_num(0x1);
-        cargarPushEAX();   //carga un 1 en la pila
-        suma();             //los suma
+        cargarMovEAX_num_B8(0x1);
+        cargarPushEAX_50();   //carga un 1 en la pila
+        generar_suma();             //los generar_suma
         cargarAsignacion(valor); //asigna el resultado a la variable a incrementar
 
     }
     
-     public void decrementarEnUno(int valor) {
+     public void decrementar1(int valor) {
 
         generarFactorVar(valor);  //carga la variable a incrementar en la pila
-        cargarMovEAX_num(0x1);
-        cargarPushEAX();   //carga un 1 en la pila
-        resta();             //los suma
+        cargarMovEAX_num_B8(0x1);
+        cargarPushEAX_50();   //carga un 1 en la pila
+        generar_resta();             //los generar_suma
         cargarAsignacion(valor); //asigna el resultado a la variable a incrementar
 
     }
 
-    public void resta() {
-        // System.out.println("cargando la resta");
+    public void generar_resta() {
+        // System.out.println("cargando la generar_resta");
         cargarPopEAX(); //POP EAX
-        cargarPopEBX(); //POP EBX
-        cargarXchgEAX_EBX();
+        cargarPopEBX_5B(); //POP EBX
+        cargarXchgEAX_EBX_93();
         cargarByte(0x29); //SUB EAX, EBX
         cargarByte(0xD8); //SUB EAX, EBX
-        cargarPushEAX();//PUSH EAX
+        cargarPushEAX_50();//PUSH EAX
     }
 
-    public void menosUnario() {
+    public void cargar_menosUnario() {
         cargarPopEAX(); //POP EAX
         cargarByte(0xF7); //NEG EAX (primer byte)
         cargarByte(0xD8); //NEG EAX (segundo byte)
-        cargarPushEAX();//PUSH EAX
+        cargarPushEAX_50();//PUSH EAX
     }
 
-    public void multiplicacion() {
+    public void cargar_multiplicacion() {
         cargarPopEAX(); //POP EAX
-        cargarPopEBX(); //POP EBX
+        cargarPopEBX_5B(); //POP EBX
         cargarByte(0xF7); //IMUL EBX (1er byte)
         cargarByte(0xEB); //IMUL EBX (2d0 byte)
-        cargarPushEAX();//PUSH EAX
+        cargarPushEAX_50();//PUSH EAX
     }
 
-    public void divicion() {
+    public void cargar_division() {
         cargarPopEAX(); //POP EAX
-        cargarPopEBX(); //POP EBX
-        cargarXchgEAX_EBX();
+        cargarPopEBX_5B(); //POP EBX
+        cargarXchgEAX_EBX_93();
         cargarByte(0x99); //CDQ
         cargarByte(0xF7); //IDIV EBX (1er byte)
         cargarByte(0xFB); //IDIV EBX (2do byte)
-        cargarPushEAX(); //PUSH EAX
+        cargarPushEAX_50(); //PUSH EAX
     }
 
 /////////////////////////////////////////////////////////////////////
@@ -226,18 +222,18 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 //
 ///////////////////////////////////////////////////////////////////
     public void generarFactorVar(int valor) {
-        cargarMovEAX_var(valor);
-        cargarPushEAX();//PUSH EAX
+        cargarMovEAX_var_8B_87(valor);
+        cargarPushEAX_50();//PUSH EAX
     }
 
     public void generarFactorConst(int valor) {
-        cargarMovEAX_num(valor);
-        cargarPushEAX();//PUSH EAX
+        cargarMovEAX_num_B8(valor);
+        cargarPushEAX_50();//PUSH EAX
     }
 
     public void generarFactorNum(int valor) {
-        cargarMovEAX_num(valor);
-        cargarPushEAX();//PUSH EAX
+        cargarMovEAX_num_B8(valor);
+        cargarPushEAX_50();//PUSH EAX
     }
 
 /////////////////////////////////////////////////////////////////
@@ -247,7 +243,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 //////////////////////////////////////////////////////////////////////
     public void cargarCondicion(String operador) {
         cargarPopEAX(); //POP EAX
-        cargarPopEBX();//POP EBX
+        cargarPopEBX_5B();//POP EBX
         cargarByte(0x39);
         cargarByte(0xC3);
 
@@ -273,7 +269,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
                 break;
         }
         cargarByte(0x05);
-        cargarJMP(0);
+        generar_JMP(0);
     }
 
     public void cargarODD() {
@@ -283,7 +279,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
         cargarByte(0x01); //TEST AL, ab
         cargarByte(0x7B); //JPO dir
         cargarByte(0x05);
-        cargarJMP(0);
+        generar_JMP(0);
 
     }
 
@@ -294,37 +290,36 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 //////////////////////////////////////////////////////////////////////
     public void cargarAsignacion(int valor) {
         cargarPopEAX(); //POP EAX --> TRAE DESDE LA PILA
-        cargarMovVar_EAX(valor);
+        cargarMovVar_EAX_89_87(valor);
     }
 
-    public void cargarCall(int valor) {
+    public void cargar_Call(int valor) {
         //TRAIGO LA DIRECCION EN LA MEMORIA
         int distancia = valor - (memoria.size() + 5);
-        cargarCALL(distancia);
+        generar_call(distancia);
     }
 
-    //      For  
     public void cargarJmpFor(int dirVar, String paso) {
 
         generarFactorVar(dirVar); //copio el valor de la variable en EAX y pusheo
 
-        if (paso.equals("_downto")) {
+        if (paso.equals("DOWNTO")) {
             cargarCondicion("<=");
-        } else if (paso.equals("_to")) {
+        } else if (paso.equals("TO")) {
             cargarCondicion(">=");
         }
     }
 
     public void incrementarContVueltasFor(int dirVar, String paso) {
-        cargarMovEAX_var(dirVar);
-        cargarPushEAX();
-        cargarMovEAX_num(0x1);
-        cargarPushEAX();
+        cargarMovEAX_var_8B_87(dirVar);
+        cargarPushEAX_50();
+        cargarMovEAX_num_B8(0x1);
+        cargarPushEAX_50();
 
-        if (paso.equals("_downto")) {
-            resta();
-        } else if (paso.equals("_to")) {
-            suma();
+        if (paso.equals("DOWNTO")) {
+            generar_resta();
+        } else if (paso.equals("TO")) {
+            generar_suma();
         }
     }
 // 
@@ -332,20 +327,20 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 //
 
     public void cargarEvaluacionRepeat() {
-        cargarMovEAX_num(0x1);
-        cargarPushEAX();
-        resta();//le resta uno a la exprecion de control que quedo en la pila (NO ME GUSTA; MISMO PROBLEMA QUE EL FOR ANIDADO)
+        cargarMovEAX_num_B8(0x1);
+        cargarPushEAX_50();
+        generar_resta();//le generar_resta uno a la exprecion de control que quedo en la pila (NO ME GUSTA; MISMO PROBLEMA QUE EL FOR ANIDADO)
 
-        cargarMovEAX_num(0x0);
+        cargarMovEAX_num_B8(0x0);
 
-        cargarXchgEAX_EBX(); //lo intercambia con EBX
-        cargarPopEAX(); //POPea EAX (ahora tiene la resta entre el valor y uno)
-        cargarPushEAX(); //y vuelve a ponerlo en la pila, para la siguiente vuelta
+        cargarXchgEAX_EBX_93(); //lo intercambia con EBX
+        cargarPopEAX(); //POPea EAX (ahora tiene la generar_resta entre el valor y uno)
+        cargarPushEAX_50(); //y vuelve a ponerlo en la pila, para la siguiente vuelta
         cargarByte(0x39);
         cargarByte(0xC3);
         cargarByte(0x7E);  //copara y salta se se ha completado el num de vueltas
         cargarByte(0x05);
-        cargarJMP(0);
+        generar_JMP(0);
 
     }
 
@@ -354,14 +349,14 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 //                    READLN--WRITE/WRITELN
 //
 //////////////////////////////////////////////////////////////////////     
-    public void cargarReadln(int valor) {
+    public void generarReadln(int valor) {
 
         int distancia =   POSICION_MEMORIA_READLN - (memoria.size() + 5);
-        cargarCALL(distancia);
-        cargarMovVar_EAX(valor);
+        generar_call(distancia);
+        cargarMovVar_EAX_89_87(valor);
     }
 
-    public void cargarWriteString(String cad) {
+    public void generarWriteString(String cad) {
 
         int strPos = memoria.size()
                 +    DESPLAZAMIENTO_STRING//15
@@ -369,12 +364,12 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
                 + traerIntdeMemoria(  POSICION_IMAGEN_BASE) //0x400000
                 - traerIntdeMemoria(  POSICION_TAMANO_HEADER); //0x200
 
-        cargarMovEAX_num(strPos);
+        cargarMovEAX_num_B8(strPos);
 
         int distancia =   MUESTRA_CADENA - (memoria.size() + 5);
-        cargarCALL(distancia);
+        generar_call(distancia);
 
-        cargarJMP(cad.length() + 1);
+        generar_JMP(cad.length() + 1);
 
         //Genera los byte de la cadena
         for (int i = 0; i < cad.length(); i++) {
@@ -383,26 +378,22 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
         cargarByte(0x00); //seguido de un cero
     }
 
-    public void cargarWriteresultado() {
+    public void cargarWriteResultado() {
         cargarPopEAX();
         int distancia =   MUESTRA_INT_EAX - (memoria.size() + 5);
-        cargarCALL(distancia);
+        generar_call(distancia);
 
     }
 
-    public void cargarSaltoDeLinea() {
+    public void genSaltoLinea() {
         int posicion = memoria.size();
         int distancia =   SALTO_DE_LINEA - (posicion + 5);
 
-        cargarCALL(distancia);
+        generar_call(distancia);
 
     }
 
-    /////////////////////////////////////////////////////////////////
-    //
-    //                     BLOQUE
-    //
-    //////////////////////////////////////////////////////////////////////     
+      
     public void cargarRET() {
         cargarByte(0XC3); //al salir de bloque en PROCEDURE debe generarse una instruccion RET (codigo C3) 
     }
@@ -414,7 +405,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
     //////////////////////////////////////////////////////////////////////   
    public void cargarEDI() {
         reservarEDI();
-        this.EDI = getSize() - 4; // - 4 para quedar en BF x<- _ _ _ 
+        this.EDI = getPosActual() - 4; // - 4 para quedar en BF x<- _ _ _ 
     }
 
     private void reservarEDI() {
@@ -428,7 +419,7 @@ FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.e
 
     public void fixupEDI() {
 
-        int posVar = getSize()
+        int posVar = getPosActual()
                 + traerIntdeMemoria(  POSICION_CODIGO_BASE)//0x1000
                 + traerIntdeMemoria(  POSICION_IMAGEN_BASE)//0x400000
                 - traerIntdeMemoria(  POSICION_TAMANO_HEADER);//

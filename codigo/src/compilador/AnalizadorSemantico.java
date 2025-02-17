@@ -15,10 +15,10 @@ public class AnalizadorSemantico {
      * @param valor
      * @return
      */
-    public int nuevoIdentificador(int base, int desplazamiento, String nombre, String tipo, int valor) {
+    public int cargarIdentificadorEnTabla(int base, int desplazamiento, String nombre, String tipo, int valor) {
 
         RegistroSemantico ident = new RegistroSemantico(nombre, tipo, valor);
-        if (getValorIdent(base + desplazamiento - 1, base, nombre) == -1) {
+        if (getValorIdentificadorEnTabla(base + desplazamiento - 1, base, nombre) == -1) {
 
             tablaRegistroSemanticoes[ultimaPosicion] = ident;
 
@@ -33,7 +33,7 @@ public class AnalizadorSemantico {
         return 0;
     }
 
-    public String verificarTipoIdentificador(int posicion, int base, String nombre) {
+    public String verificadorIdentificadorXtipo(int posicion, int base, String nombre) {
 
         String tipoIdent = new String();
 
@@ -47,7 +47,7 @@ public class AnalizadorSemantico {
         return "identificador no encontrado";
     }
 
-    public int getValorIdent(int posicion, int base, String nombre) {
+    public int getValorIdentificadorEnTabla(int posicion, int base, String nombre) {
         int salida = -1;
         //String tipo=new String();   
         for (int i = posicion; i > base; i--) {
@@ -60,7 +60,7 @@ public class AnalizadorSemantico {
         return salida;
     }
 
-    public int busquedaPosIdent(int posicion, int base, String nombre) {
+    public int buscarPosIdentificador(int posicion, int base, String nombre) {
         int salida = -1;
 
         for (int i = posicion - 1; i >= base; i--) {

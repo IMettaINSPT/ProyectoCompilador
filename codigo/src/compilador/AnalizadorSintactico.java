@@ -15,6 +15,8 @@ public class AnalizadorSintactico {
     private final AnalizadorSemantico asem;
     private GeneradorDeCodigo genCod;
     private String nombreIdentificador;
+    private String signo_leido;
+
     int posicionHalt = 0;
     int linea;
 
@@ -26,7 +28,7 @@ public class AnalizadorSintactico {
         this.lex = scanner;
         this.asem = semantic;
         this.genCod = gen;
-       
+
     }
 
     private void mostrarError(Errores.erroresEnum enumError, Token token) {
@@ -42,13 +44,13 @@ public class AnalizadorSintactico {
         bloque(0);
 
         if (this.token.getValor().equals(".")) {
-                    leerProximoToken();
+            leerProximoToken();
 
             System.out.println("programa valido el PL0");
             if (posicionHalt != 0) {
-                genCod.cargarIntEn(posicionHalt - 4, genCod.getSize() - posicionHalt);
+                genCod.cargarIntEn(posicionHalt - 4, genCod.getPosActual() - posicionHalt);
             }
-            genCod.cargarFinalDelPrograma(asem.getCantVar());//------------------------GENCOD
+            genCod.cargarFinalDelPrograma(asem.getCantVar());
             genCod.GenerarArchivo();
         } else {
 
@@ -66,8 +68,8 @@ public class AnalizadorSintactico {
      */
     public void bloque(int base) throws FileNotFoundException, IOException {
         int desplazamiento = 0;
-        genCod.cargarJMP(0);//  pisarase
-        int posSalto = genCod.getSize();
+        genCod.generar_JMP(0);//  pisarase
+        int posSalto = genCod.getPosActual();
 
         /*
         *               CONST
@@ -103,7 +105,7 @@ public class AnalizadorSintactico {
                 mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
             }
 
-            asem.nuevoIdentificador(base, desplazamiento, nombreIdentificador, "const", valor);//-->PROBANDO CARGAR A TALBA DE SIGNOS
+            asem.cargarIdentificadorEnTabla(base, desplazamiento, nombreIdentificador, "const", valor);
             desplazamiento++;
             leerProximoToken();
 
@@ -134,7 +136,7 @@ public class AnalizadorSintactico {
                     mostrarError(Errores.erroresEnum.FALTA_NUMERO, this.token);
                 }
 
-                asem.nuevoIdentificador(base, desplazamiento, nombreIdentificador, "const", valor);//-->PROBANDO CARGAR A TALBA DE SIGNOS
+                asem.cargarIdentificadorEnTabla(base, desplazamiento, nombreIdentificador, "const", valor);
                 desplazamiento++;
                 leerProximoToken();
             }
@@ -153,8 +155,8 @@ public class AnalizadorSintactico {
         if (this.token.getValor().equals("VAR")) {
             leerProximoToken();
             if (this.token.esIdentificador()) {
-                nombreIdentificador = token.getValor(); //-->PROBANDO CARGAR A TALBA DE SIGNOS
-                asem.nuevoIdentificador(base, desplazamiento, nombreIdentificador, "var", asem.getCantVar());//-->PROBANDO CARGAR A TALBA DE SIGNOS
+                nombreIdentificador = token.getValor(); 
+                asem.cargarIdentificadorEnTabla(base, desplazamiento, nombreIdentificador, "var", asem.getCantVar());
                 desplazamiento++;
                 leerProximoToken();
             } else {
@@ -165,8 +167,8 @@ public class AnalizadorSintactico {
             while (token.getValor().equals(",")) {
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
-                    nombreIdentificador = token.getValor(); //-->PROBANDO CARGAR A TALBA DE SIGNOS
-                    asem.nuevoIdentificador(base, desplazamiento, nombreIdentificador, "var", asem.getCantVar());//-->PROBANDO CARGAR A TALBA DE SIGNOS
+                    nombreIdentificador = token.getValor(); 
+                    asem.cargarIdentificadorEnTabla(base, desplazamiento, nombreIdentificador, "var", asem.getCantVar());
                     desplazamiento++;
                     leerProximoToken();
                 } else {
@@ -175,8 +177,7 @@ public class AnalizadorSintactico {
             }
             if (token.getValor().equals(";")) {
                 leerProximoToken();
-                //      } else {
-                //         mostrarError(Errores.erroresEnum.FALTA_PUNTO_Y_COMA_COMA, this.token);
+                
             }
 
         }
@@ -189,7 +190,7 @@ public class AnalizadorSintactico {
 
             if (this.token.esIdentificador()) {
                 nombreIdentificador = token.getValor();
-                asem.nuevoIdentificador(base, desplazamiento, nombreIdentificador, "procedure", genCod.getSize());//-->PROBANDO CARGAR A TALBA DE SIGNOS
+                asem.cargarIdentificadorEnTabla(base, desplazamiento, nombreIdentificador, "procedure", genCod.getPosActual());
                 desplazamiento++;
                 leerProximoToken();
 
@@ -201,14 +202,14 @@ public class AnalizadorSintactico {
 
                 bloque(base + desplazamiento);
 
-                genCod.cargarRET();//-----------------------------gencod 
+                genCod.cargarRET();
 
                 if (token.getValor().equals(";")) {
                     leerProximoToken();
                 }
             }
         }
-        int finalDeBloque = genCod.getSize();
+        int finalDeBloque = genCod.getPosActual();
 
         genCod.cargarIntEn(posSalto - 4, (finalDeBloque - posSalto));
 
@@ -236,26 +237,26 @@ public class AnalizadorSintactico {
       *       ASIGNACION
          */
         if (this.token.esIdentificador()) {
-            String nombreAsignando = token.getValor(); //-->PROBANDO CARGAR A TALBA DE SIGNOS
+            String nombreAsignando = token.getValor(); 
 
             leerProximoToken();
 
             if (token.getValor().equals(":=") || token.getValor().equals("=")) {   //ACA SE DECLARA UN IDENTIFICADOR
-                if (!asem.verificarTipoIdentificador(asem.getUltimaPosicion(), 0, nombreAsignando).equals("VAR")) {  //probablemente haya que tcar las pos de busqueda
+                if (!asem.verificadorIdentificadorXtipo(asem.getUltimaPosicion(), 0, nombreAsignando).equals("VAR")) {  //probablemente haya que tcar las pos de busqueda
                     mostrarError(Errores.erroresEnum.FALTA_IGUAL, this.token);
                 }
                 leerProximoToken();
 
                 expresion(base, desplazamiento);
 
-                genCod.cargarAsignacion(asem.getValorIdent(base + desplazamiento, 0, nombreAsignando) * 4);
-                // System.out.println(asem.busquedaPosIdent(asem.getUltimaPosicion(), 0, nombreAsignando));
+                genCod.cargarAsignacion(asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, nombreAsignando) * 4);
+                // System.out.println(asem.buscarPosIdentificador(asem.getUltimaPosicion(), 0, nombreAsignando));
             } else if (this.token.getValor().equals("++")) {
-                genCod.incrementarEnUno(asem.getValorIdent(base + desplazamiento, 0, nombreAsignando) * 4);
+                genCod.incrementar1(asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, nombreAsignando) * 4);
                 leerProximoToken();
 
             } else if (this.token.getValor().equals("--")) {
-                genCod.decrementarEnUno(asem.getValorIdent(base + desplazamiento, 0, nombreAsignando) * 4);
+                genCod.decrementar1(asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, nombreAsignando) * 4);
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -271,14 +272,14 @@ public class AnalizadorSintactico {
 
             if (this.token.esIdentificador()) {
                 String nombre = token.getValor();
-                int valor = asem.getValorIdent(asem.getUltimaPosicion(), 0, token.getValor());
+                int valor = asem.getValorIdentificadorEnTabla(asem.getUltimaPosicion(), 0, token.getValor());
                 //System.out.println(nombre + " " + valor);
                 String nombreProcedure = token.getValor();
-                if (!asem.verificarTipoIdentificador(asem.getUltimaPosicion(), 0, nombreProcedure).equals("PROCEDURE")) {  //probablemente haya que tcar las pos de busqueda
+                if (!asem.verificadorIdentificadorXtipo(asem.getUltimaPosicion(), 0, nombreProcedure).equals("PROCEDURE")) {  //probablemente haya que tcar las pos de busqueda
 
                     mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
                 }
-                genCod.cargarCall(valor);
+                genCod.cargar_Call(valor);
                 leerProximoToken();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -310,8 +311,8 @@ public class AnalizadorSintactico {
 
             if (this.token.getValor().equals("HALT")) {
 
-                genCod.cargarJMP(0);
-                posicionHalt = genCod.getSize();
+                genCod.generar_JMP(0);
+                posicionHalt = genCod.getPosActual();
                 leerProximoToken();
             }
 
@@ -335,10 +336,10 @@ public class AnalizadorSintactico {
 
             if (this.token.getValor().equals("THEN")) {
 
-                inicioDeProposicion = genCod.getSize();
+                inicioDeProposicion = genCod.getPosActual();
                 leerProximoToken();
                 propocicion(base, desplazamiento);
-                finDeProposicion = genCod.getSize();
+                finDeProposicion = genCod.getPosActual();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_THEN, this.token);
             }
@@ -356,15 +357,15 @@ public class AnalizadorSintactico {
         if (this.token.getValor().equals("WHILE")) {
 
             int finProposicion = 0;//inicializo fuera del if
-            int inicioCondicion = genCod.getSize();
+            int inicioCondicion = genCod.getPosActual();
             condicion(base, desplazamiento);
-            int finCondicion = genCod.getSize();
+            int finCondicion = genCod.getPosActual();
 
             if (this.token.getValor().equals("DO")) {
 
                 leerProximoToken();
                 propocicion(base, desplazamiento);
-                finProposicion = genCod.getSize();
+                finProposicion = genCod.getPosActual();
             } else {
                 mostrarError(Errores.erroresEnum.FALTA_DO, this.token);
             }
@@ -373,7 +374,7 @@ public class AnalizadorSintactico {
 
             genCod.cargarIntEn(finCondicion - 4, distanciaSalto);
 
-            genCod.cargarJMP(inicioCondicion - (finProposicion + 5));
+            genCod.generar_JMP(inicioCondicion - (finProposicion + 5));
 
         }
 
@@ -391,7 +392,7 @@ public class AnalizadorSintactico {
             }
 
             String nombreAsignando = token.getValor();
-            if (!asem.verificarTipoIdentificador(asem.getUltimaPosicion(), 0, nombreAsignando).equals("VAR")) {
+            if (!asem.verificadorIdentificadorXtipo(asem.getUltimaPosicion(), 0, nombreAsignando).equals("VAR")) {
                 mostrarError(Errores.erroresEnum.FALTA_VAR, this.token);
             }
             leerProximoToken();
@@ -403,11 +404,11 @@ public class AnalizadorSintactico {
 
             leerProximoToken();
             expresion(base, desplazamiento);
-            int varControlFor = asem.getValorIdent(base + desplazamiento, 0, nombreAsignando) * 4;
-            int posEvaluacionyPaso = genCod.getSize();
+            int varControlFor = asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, nombreAsignando) * 4;
+            int posEvaluacionyPaso = genCod.getPosActual();
             genCod.cargarAsignacion(varControlFor);
 
-            if (!token.equals("TO") && !token.equals("DOWNTO")) {
+            if (!token.getValor().equals("TO") && !token.getValor().equals("DOWNTO")) {
 
                 mostrarError(Errores.erroresEnum.GENERICO, this.token);
             }
@@ -416,9 +417,9 @@ public class AnalizadorSintactico {
             leerProximoToken();
             expresion(base, desplazamiento);
 
-            genCod.cargarJmpFor(varControlFor, paso);// distanciaAFinalPropocicion - (genCod.getSize()+5));
-            //System.out.println("POSICION: "+Integer.toHexString(genCod.getSize()) );  
-            int posFinCondicion = genCod.getSize();
+            genCod.cargarJmpFor(varControlFor, paso);// distanciaAFinalPropocicion - (genCod.getPosActual()+5));
+            //System.out.println("POSICION: "+Integer.toHexString(genCod.getPosActual()) );  
+            int posFinCondicion = genCod.getPosActual();
 
             if (this.token.getValor().equals("DO")) {
 
@@ -427,12 +428,12 @@ public class AnalizadorSintactico {
                 propocicion(base, desplazamiento);
                 genCod.incrementarContVueltasFor(varControlFor, paso);
 
-                int posFinalPropocicion = genCod.getSize();
+                int posFinalPropocicion = genCod.getPosActual();
                 int distanciaSaltoFOR = posFinalPropocicion + 5 - posFinCondicion;
-                //System.out.println("POSICION: "+Integer.toHexString(genCod.getSize()) );    
+                //System.out.println("POSICION: "+Integer.toHexString(genCod.getPosActual()) );    
 
                 genCod.cargarIntEn(posFinCondicion - 4, distanciaSaltoFOR); // Se carga la distancia en el JUMP reservado al final de la condición - 4 para quedar despues del JUMP E9
-                genCod.cargarJMP(posEvaluacionyPaso - ((genCod.getSize() + 5)));
+                genCod.generar_JMP(posEvaluacionyPaso - ((genCod.getPosActual() + 5)));
 
             } else {
 
@@ -458,18 +459,18 @@ public class AnalizadorSintactico {
                 mostrarError(Errores.erroresEnum.GENERICO, this.token);
             }
 
-            int posEvaluacionRepeat = genCod.getSize();
+            int posEvaluacionRepeat = genCod.getPosActual();
             genCod.cargarEvaluacionRepeat();
-            int posFinCondicionRepeat = genCod.getSize();
+            int posFinCondicionRepeat = genCod.getPosActual();
 
             leerProximoToken();
             propocicion(base, desplazamiento);
 
-            int posFinProposicionRep = genCod.getSize();
+            int posFinProposicionRep = genCod.getPosActual();
             int distanciaSaltoRep = posFinProposicionRep + 5 - posFinCondicionRepeat;
 
             genCod.cargarIntEn(posFinCondicionRepeat - 4, distanciaSaltoRep);
-            genCod.cargarJMP(posEvaluacionRepeat - (genCod.getSize() + 5));
+            genCod.generar_JMP(posEvaluacionRepeat - (genCod.getPosActual() + 5));
             genCod.cargarPopEAX();
         }
 
@@ -490,11 +491,11 @@ public class AnalizadorSintactico {
             }
 
             String nombreVarSwitch = token.getValor();
-            if (!asem.verificarTipoIdentificador(asem.getUltimaPosicion(), 0, nombreVarSwitch).equals("VAR")) {
+            if (!asem.verificadorIdentificadorXtipo(asem.getUltimaPosicion(), 0, nombreVarSwitch).equals("VAR")) {
 
                 mostrarError(Errores.erroresEnum.FALTA_VAR, this.token);
             }
-            int varSwitch = asem.getValorIdent(base + desplazamiento, 0, nombreVarSwitch) * 4;
+            int varSwitch = asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, nombreVarSwitch) * 4;
             leerProximoToken();
 
             while (this.token.getValor().equals("CASE")) {
@@ -502,17 +503,17 @@ public class AnalizadorSintactico {
                 leerProximoToken();
                 expresion(base, desplazamiento);
                 genCod.cargarCondicion("=");
-                evaluacionSwitch = genCod.getSize();
+                evaluacionSwitch = genCod.getPosActual();
                 if (this.token.getValor().equals("DO")) {
                     leerProximoToken();
                     propocicion(base, desplazamiento);
-                    genCod.cargarJMP(0);
-                    switchRealizado.add(genCod.getSize());
-                    System.out.println("POSICION: " + Integer.toHexString(genCod.getSize()));
+                    genCod.generar_JMP(0);
+                    switchRealizado.add(genCod.getPosActual());
+                    System.out.println("POSICION: " + Integer.toHexString(genCod.getPosActual()));
 
                 }
 
-                genCod.cargarIntEn(evaluacionSwitch - 4, genCod.getSize() - evaluacionSwitch);
+                genCod.cargarIntEn(evaluacionSwitch - 4, genCod.getPosActual() - evaluacionSwitch);
 
             }
 
@@ -522,13 +523,13 @@ public class AnalizadorSintactico {
                     leerProximoToken();
                     propocicion(base, desplazamiento);
                     for (int pos : switchRealizado) {
-                        genCod.cargarIntEn(pos - 4, genCod.getSize() - pos);
+                        genCod.cargarIntEn(pos - 4, genCod.getPosActual() - pos);
                     }
                 }
 
                 //...  
             }
-            // genCod.cargarIntEn(SwitchRealizado - 4, genCod.getSize() - SwitchRealizado); //...  
+            // genCod.cargarIntEn(SwitchRealizado - 4, genCod.getPosActual() - SwitchRealizado); //...  
         }
 
         /*
@@ -545,11 +546,11 @@ public class AnalizadorSintactico {
                 mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_A, this.token);
             }
             if (this.token.esIdentificador()) {
-                if (!asem.verificarTipoIdentificador(base + desplazamiento, 0, token.getValor()).equals("VAR")) {  //probablemente haya que tcar las pos de busqueda
+                if (!asem.verificadorIdentificadorXtipo(base + desplazamiento, 0, token.getValor()).equals("VAR")) {  //probablemente haya que tcar las pos de busqueda
 
                     mostrarError(Errores.erroresEnum.FALTA_VAR, this.token);
                 }
-                genCod.cargarReadln(asem.getValorIdent(base + desplazamiento, 0, token.getValor()) * 4);//_--------------------------gencod (OJO CORREGIR VALOR)
+                genCod.generarReadln(asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, token.getValor()) * 4);
                 leerProximoToken();
             } else {
 
@@ -558,7 +559,7 @@ public class AnalizadorSintactico {
             while (token.getValor().equals(",")) {
                 leerProximoToken();
                 if (this.token.esIdentificador()) {
-                    genCod.cargarReadln(asem.getValorIdent(base + desplazamiento, 0, token.getValor()) * 4);//_--------------------------gencod (OJO CORREGIR VALOR)
+                    genCod.generarReadln(asem.getValorIdentificadorEnTabla(base + desplazamiento, 0, token.getValor()) * 4);
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_IDENTIFICADOR, this.token);
@@ -579,41 +580,47 @@ public class AnalizadorSintactico {
     *          WRITELINE
     *                
          */
+        if (this.token.getValor().equals("NEWLINE")) {
+            genCod.generarWriteString("");
+             genCod.genSaltoLinea();
+             leerProximoToken();
+        }
+
         if (this.token.getValor().equals("WRITELN")) {
 
             leerProximoToken();
             if (this.token.getValor().equals("(")) {
                 leerProximoToken();
                 if (this.token.esCadena()) {
-                    genCod.cargarWriteString(token.getValor());
+                    genCod.generarWriteString(token.getValor());
 
                     leerProximoToken();
                 } else {
                     expresion(base, desplazamiento);
-                    genCod.cargarWriteresultado();
+                    genCod.cargarWriteResultado();
                 }
 
                 while (token.getValor().equals(",")) {
                     leerProximoToken();
                     if (this.token.esCadena()) {
-                        genCod.cargarWriteString(token.getValor());//_______gencod
+                        genCod.generarWriteString(token.getValor());
 
                         leerProximoToken();
                     } else {
                         expresion(base, desplazamiento);
-                        genCod.cargarWriteresultado();
+                        genCod.cargarWriteResultado();
                     }
                 }
 
                 if (this.token.getValor().equals(")")) {
-                    genCod.cargarSaltoDeLinea();//__________________________________gencod
+                    genCod.genSaltoLinea();
                     leerProximoToken();
                 } else {
                     mostrarError(Errores.erroresEnum.FALTA_PARENTESIS_C, this.token);
                 }
 
             } else {
-                genCod.cargarSaltoDeLinea();
+                genCod.genSaltoLinea();
             }
         }
         /*
@@ -627,24 +634,24 @@ public class AnalizadorSintactico {
             if (this.token.getValor().equals("(")) {
                 leerProximoToken();
                 if (this.token.esCadena()) {
-                    genCod.cargarWriteString(token.getValor());//_______gencod
+                    genCod.generarWriteString(token.getValor());//_______gencod
                     leerProximoToken();
                 } else {
                     expresion(base, desplazamiento);
-                    genCod.cargarWriteresultado();
+                    genCod.cargarWriteResultado();
                 }
 
                 while (token.getValor().equals(",")) {
                     leerProximoToken();
                     if (this.token.esCadena()) {
-                        genCod.cargarWriteString(token.getValor());//_______gencod
+                        genCod.generarWriteString(token.getValor());//_______gencod
                         //System.out.println("!!!!!!!"+signo_leido+"-"+token.getValor());
-                        //System.out.println("POSICION: "+Integer.toHexString(genCod.getSize()) );
+                        //System.out.println("POSICION: "+Integer.toHexString(genCod.getPosActual()) );
                         leerProximoToken();
 
                     } else {
                         expresion(base, desplazamiento);
-                        genCod.cargarWriteresultado();
+                        genCod.cargarWriteResultado();
                     }
 
                 }
@@ -778,13 +785,13 @@ public class AnalizadorSintactico {
 
         if (token.getValor().equals("+") || token.getValor().equals("-")) {
             if (token.getValor().equals("+")) {
-                genCod.suma();
+                genCod.generar_suma();
             } else {
 
                 leerProximoToken();
 
                 termino(base, desplazamiento);
-                genCod.menosUnario();
+                genCod.cargar_menosUnario();
 
             }
         } else {
@@ -802,12 +809,12 @@ public class AnalizadorSintactico {
             termino(base, desplazamiento);
 
             if (operacion.equals("+")) {
-                genCod.suma();
+                genCod.generar_suma();
 
             } else {
-                genCod.resta();
+                genCod.generar_resta();
                 //leerProximoToken();
-            } //------------------------GENCOD
+            }
 
         }
 
@@ -827,12 +834,12 @@ public class AnalizadorSintactico {
             factor(base, desplazamiento);
 
             if (operacion.equals("*")) {
-                genCod.multiplicacion();
+                genCod.cargar_multiplicacion();
             } else {
 
-                genCod.divicion();
+                genCod.cargar_division();
 
-            } //------------------------GENCOD
+            } 
 
         }
     }
@@ -845,16 +852,16 @@ public class AnalizadorSintactico {
     public void factor(int base, int desplazamiento) throws FileNotFoundException, IOException {
 
         if (this.token.esIdentificador()) {
-            nombreIdentificador = token.getValor(); //-->PROBANDO buscar en la TABLA DE SIGNOS
+            nombreIdentificador = token.getValor(); 
 
-            if (asem.verificarTipoIdentificador(desplazamiento + base, 0, nombreIdentificador).equals("CONST")) {
-                genCod.generarFactorConst(asem.getValorIdent(desplazamiento + base, 0, nombreIdentificador));
+            if (asem.verificadorIdentificadorXtipo(desplazamiento + base, 0, nombreIdentificador).equals("CONST")) {
+                genCod.generarFactorConst(asem.getValorIdentificadorEnTabla(desplazamiento + base, 0, nombreIdentificador));
 
-            } else if (asem.verificarTipoIdentificador(desplazamiento + base, 0, nombreIdentificador).equals("VAR")) {
-                genCod.generarFactorVar(asem.getValorIdent(desplazamiento + base, 0, nombreIdentificador) * 4);
+            } else if (asem.verificadorIdentificadorXtipo(desplazamiento + base, 0, nombreIdentificador).equals("VAR")) {
+                genCod.generarFactorVar(asem.getValorIdentificadorEnTabla(desplazamiento + base, 0, nombreIdentificador) * 4);
 
-// System.out.println("valor var= " + asem.getValorIdent(desplazamiento + base - 1, 0, nombreIdentificador));
-//System.out.println(asem.verificarTipoIdentificador(asem.getUltimaPosicion(),0, "uno"));
+// System.out.println("valor var= " + asem.getValorIdentificadorEnTabla(desplazamiento + base - 1, 0, nombreIdentificador));
+//System.out.println(asem.verificadorIdentificadorXtipo(asem.getUltimaPosicion(),0, "uno"));
             }
 
             leerProximoToken();                                //                  !!!!!!!

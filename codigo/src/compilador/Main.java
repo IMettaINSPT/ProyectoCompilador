@@ -6,14 +6,14 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String nomArchivo = "C:\\INSPT2\\S1\\3RECU.PL0";
+        String nomArchivo = "C:\\INSPT2\\S1\\RECUTN.PL0";
         AnalizadorLexico alex;
         try {
             alex = new AnalizadorLexico(nomArchivo);
 //        Token token;
 //        int numeroLinea = 1;
             AnalizadorSemantico aSem = new AnalizadorSemantico();
-            GeneradorDeCodigo genCod = new GeneradorDeCodigo();
+            GeneradorDeCodigo genCod = new GeneradorDeCodigo(nomArchivo);
 
             AnalizadorSintactico aSint = new AnalizadorSintactico(alex, aSem, genCod);
 

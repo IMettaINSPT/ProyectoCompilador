@@ -26,12 +26,15 @@ public class AnalizadorLexico {
         PALABRAS_RESERVADAS.add("VAR");
         PALABRAS_RESERVADAS.add("CALL");
         PALABRAS_RESERVADAS.add("BEGIN");
+        PALABRAS_RESERVADAS.add("NEWLINE");
         PALABRAS_RESERVADAS.add("END");
         PALABRAS_RESERVADAS.add("IF");
+        PALABRAS_RESERVADAS.add("FOR");
         PALABRAS_RESERVADAS.add("THEN");
         PALABRAS_RESERVADAS.add("ELSE");
         PALABRAS_RESERVADAS.add("WHILE");
         PALABRAS_RESERVADAS.add("DO");
+        PALABRAS_RESERVADAS.add("TO");
         PALABRAS_RESERVADAS.add("REPEAT");
         PALABRAS_RESERVADAS.add("SWITCH");
         PALABRAS_RESERVADAS.add("TIMES");
@@ -106,14 +109,13 @@ public class AnalizadorLexico {
                 if (String.valueOf(currentChar).equals(":") || String.valueOf(currentChar).equals("<") || String.valueOf(currentChar).equals(">") || String.valueOf(currentChar).equals("+") || String.valueOf(currentChar).equals("-")) {
                     while ((ch = leerChar()) != -1 && SIMBOLOS.contains((char) ch)) {
                         if (String.valueOf(currentChar).equals("-")) {
-                            if( !String.valueOf((char) ch).equals("-")){
-                                 ultimoCaracterLeido = ch;
-                               return new Token(identificarSimbolo(cadena), cadena);
+                            if (!String.valueOf((char) ch).equals("-")) {
+                                ultimoCaracterLeido = ch;
+                                return new Token(identificarSimbolo(cadena), cadena);
 
                             }
                         }
-                       
-                        
+
                         cadena += (char) ch;
                         if (cadena.equals("++") || cadena.equals("--")) {
                             return new Token(identificarSimbolo(cadena), cadena);

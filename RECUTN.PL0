@@ -1,0 +1,13 @@
+const menosDos = -2;
+var dos, vez, num;
+begin
+ write('Numero: ');
+ readLn(num);
+ dos := -menosDos;
+ for vez := 3 + menosDos to dos*dos*dos*dos - 1 do
+ begin
+ num := num / dos;
+ write(num);
+ newLine
+ end
+end.
