@@ -1,82 +1,82 @@
 package compilador;
 
-import java.util.ArrayList;
-
 public class AnalizadorSemantico {
 
-    static RegistroSemantico[] tabla = new RegistroSemantico[Constantes.DECLARACIONES_MAX - 1];    
-    String arhivoSalidaLog;
-    static int posicion = 0;
+    private RegistroSemantico tablaRegistroSemanticoes[] = new RegistroSemantico[100]; //muy berreta, lograr almacenamiento dinamico
+    private int ultimaPosicion = 0;
+    private int contadorVariables = 0;
 
-    public AnalizadorSemantico(String archSalidaLog) {
-        this.arhivoSalidaLog = archSalidaLog;
-    }
+    /**
+     *
+     * @param base
+     * @param desplazamiento
+     * @param nombre
+     * @param tipo
+     * @param valor
+     * @return
+     */
+    public int nuevoIdentificador(int base, int desplazamiento, String nombre, String tipo, int valor) {
 
-    public void declarar(RegistroSemantico identificador, int desde, int hasta) {
-        validarPosicion();
+        RegistroSemantico ident = new RegistroSemantico(nombre, tipo, valor);
+        if (getValorIdent(base + desplazamiento - 1, base, nombre) == -1) {
 
-        RegistroSemantico encontrado = buscar(identificador.getNombre(), hasta, desde);
+            tablaRegistroSemanticoes[ultimaPosicion] = ident;
 
-        if (encontrado != null) {
-            System.out.println("Error: El identificador " + identificador.getNombre()
-                    + " ya ha sido declarado");
-            System.exit(1);
+            if (ident.getTipo().equals("var")) {
+                contadorVariables++;
+            }
+
+            //System.out.println("NUEVO IDENTIFICADOR AGREGADO: " + nombre + " " + tipo + " " + valor + " en la posicion " + ultimaPosicion);
+            ultimaPosicion++;
         }
 
-        tabla[hasta] = identificador;
-        // System.out.println(hasta + identificador.toString());
+        return 0;
     }
 
-    static void validarTipo(String token, TipoIdentificador tipo, int hasta) {
-        RegistroSemantico identificador = buscar(token, hasta, 0);
-        switch (tipo) {
-            case TipoIdentificador.CONST:
-                if (!identificador.getTipo().equals(TipoIdentificador.CONST)) {
-                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
-                    System.exit(1);
-                }
-                break;
-            case TipoIdentificador.VAR:
-                if (!identificador.getTipo().equals(TipoIdentificador.CONST)
-                        && !identificador.getTipo().equals(TipoIdentificador.VAR)) {
-                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
-                    System.exit(1);
-                }
-                break;
-            case TipoIdentificador.PROCEDURE:
-                if (!identificador.getTipo().equals(TipoIdentificador.PROCEDURE)) {
-                    mostrarMensajeDeError(token, identificador.getTipo(), tipo);
-                    System.exit(1);
-                }
-                break;
+    public String verificarTipoIdentificador(int posicion, int base, String nombre) {
 
-            default:
-                break;
-        }
-    }
+        String tipoIdent = new String();
 
-    static void mostrarMensajeDeError(String token, TipoIdentificador tipoEsperado, TipoIdentificador tipoRecibido) {
-        System.err.println("Error: " + token + " es del tipo " + tipoRecibido + " pero se esperaba " + tipoEsperado);
-    }
-
-    static RegistroSemantico buscar(String token, int desde, int hasta) {
-        for (int i = desde-1; i >= hasta; i--) {
-            if (tabla[i].getNombre().equals(token)) {
-                return tabla[i];
+        for (int i = posicion; i > base; i--) {
+            RegistroSemantico ident = tablaRegistroSemanticoes[i - 1];
+            if (ident.getNombre().equals(nombre)) {
+                return ident.getTipo().toUpperCase();
             }
         }
-        return null;
+
+        return "identificador no encontrado";
     }
 
-    static int getSize() {
-        return posicion;
-    }
-
-    private void validarPosicion() {
-        if (posicion >= Constantes.DECLARACIONES_MAX - 1) {
-            System.out.println(
-                    "Error: Se ha alcanzado el límite de declaraciones (" + Constantes.DECLARACIONES_MAX + ")");
-            System.exit(1);
+    public int getValorIdent(int posicion, int base, String nombre) {
+        int salida = -1;
+        //String tipo=new String();   
+        for (int i = posicion; i > base; i--) {
+            RegistroSemantico ident = tablaRegistroSemanticoes[i - 1];
+            if (ident.getNombre().equals(nombre)) {
+                salida = ident.getValor();
+                return salida;
+            }
         }
+        return salida;
+    }
+
+    public int busquedaPosIdent(int posicion, int base, String nombre) {
+        int salida = -1;
+
+        for (int i = posicion - 1; i >= base; i--) {
+            RegistroSemantico ident = tablaRegistroSemanticoes[i];
+            if (ident.getNombre().equals(nombre)) {
+                return i;
+            }
+        }
+        return salida;
+    }
+
+    public int getUltimaPosicion() {
+        return ultimaPosicion;
+    }
+
+    public int getCantVar() {
+        return contadorVariables;
     }
 }

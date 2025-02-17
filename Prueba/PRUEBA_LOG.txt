@@ -1,9 +1,0 @@
-var X, Y;
-
-BEGIN
-
-X:= -2;
-
-write (X);
-
-END.

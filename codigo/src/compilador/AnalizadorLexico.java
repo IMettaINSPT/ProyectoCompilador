@@ -1,10 +1,8 @@
 package compilador;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +32,9 @@ public class AnalizadorLexico {
         PALABRAS_RESERVADAS.add("ELSE");
         PALABRAS_RESERVADAS.add("WHILE");
         PALABRAS_RESERVADAS.add("DO");
+        PALABRAS_RESERVADAS.add("REPEAT");
+        PALABRAS_RESERVADAS.add("SWITCH");
+        PALABRAS_RESERVADAS.add("TIMES");
         PALABRAS_RESERVADAS.add("READ");
         PALABRAS_RESERVADAS.add("READLN");
         PALABRAS_RESERVADAS.add("WRITE");
@@ -102,9 +103,23 @@ public class AnalizadorLexico {
             if (SIMBOLOS.contains(currentChar)) {
                 cadena += currentChar;
 
-                if (String.valueOf(currentChar).equals(":") || String.valueOf(currentChar).equals("<") || String.valueOf(currentChar).equals(">")) {
+                if (String.valueOf(currentChar).equals(":") || String.valueOf(currentChar).equals("<") || String.valueOf(currentChar).equals(">") || String.valueOf(currentChar).equals("+") || String.valueOf(currentChar).equals("-")) {
                     while ((ch = leerChar()) != -1 && SIMBOLOS.contains((char) ch)) {
+                        if (String.valueOf(currentChar).equals("-")) {
+                            if( !String.valueOf((char) ch).equals("-")){
+                                 ultimoCaracterLeido = ch;
+                               return new Token(identificarSimbolo(cadena), cadena);
+
+                            }
+                        }
+                       
+                        
                         cadena += (char) ch;
+                        if (cadena.equals("++") || cadena.equals("--")) {
+                            return new Token(identificarSimbolo(cadena), cadena);
+
+                        }
+
                     }
                     ultimoCaracterLeido = ch;
 

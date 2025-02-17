@@ -1,2268 +1,423 @@
 package compilador;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
-
+/**
+ *
+ * @author Alumno
+ */
 public class GeneradorDeCodigo {
 
-    public String getFileOutPath() {
-        return fileOutPath;
-    }
-
-    public void setFileOutPath(String fileOutPath) {
-        this.fileOutPath = fileOutPath;
-    }
-
-    private ArrayList<Byte> memoria = new ArrayList<>();
+    ArrayList<Byte> memoria = new ArrayList<Byte>();
+    FileOutputStream archivoWin32;
+    static final int MAXIDENT = 0x100;
+    static final int TAMANO_BEAN = 0x4;
+    static final int SALTO_DE_LINEA = 0x410;
+    static final int MUESTRA_INT_EAX = 0x420;
+    static final int POSICION_MEMORIA_READLN = 0x590;
+    static final int DESPLAZAMIENTO_STRING = 0xf;
+    static final int POSICION_CODIGO_BASE = 0xcc;
+    static final int POSICION_IMAGEN_BASE = 0xd4;
+    static final int POSICION_TAMANO_HEADER =0xf4;
+    static final int MUESTRA_CADENA = 0x3e0;
+    static final int POSICION_FINAL_DEL_PROGRAMA = 0x588;
+    static final int POSICION_MOV_EDI = 0x700;
+    static final int POSICION_TAMANO_VIRTUAL = 0x1a0;
+    static final int POSICION_ALINEAMIENTO_ARCHIVO =0xdc;
+    static final int POSICION_SECCION_CODIGO = 0xbc;
+    static final int POSICION_DATA_PURA = 0x1a8;
+    static final int POSICION_ALINEAMIENTO_SECCION = 0xd8;
+    static final int POSICION_TAMANO_IMAGEN = 0xf0;
+    static final int POSICION_BASE_DATOS = 0xd0;
+    
+    
     private int EDI;
-    private int finalDeCodigoCargado;
-    private String fileOutPath;
-    private Boolean MOSTRAR_FINAL_DE_PROGRAMA = true;
-    private Boolean MOSTRAR_CARACTERES_ASCII = false;
-    private Boolean MOSTRAR_TOKENS = true;
-    private Boolean MOSTRAR_LINEA = false;
 
-    public GeneradorDeCodigo(String fileOutPath) {
-        this.fileOutPath =fileOutPath;
-        memoria.add((byte) 0x4D);
-        memoria.add((byte) 0x5A);
-        memoria.add((byte) 0x60);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x60);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA0);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0E);
-        memoria.add((byte) 0x1F);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x0E);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB4);
-        memoria.add((byte) 0x09);
-        memoria.add((byte) 0xCD);
-        memoria.add((byte) 0x21);
-        memoria.add((byte) 0xB8);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x4C);
-        memoria.add((byte) 0xCD);
-        memoria.add((byte) 0x21);
-        memoria.add((byte) 0x54);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x70);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x67);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x6D);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x57);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x33);
-        memoria.add((byte) 0x32);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x63);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x70);
-        memoria.add((byte) 0x70);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x63);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x2E);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x49);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x63);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x62);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x4D);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0x44);
-        memoria.add((byte) 0x4F);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0x2E);
-        memoria.add((byte) 0x0D);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x24);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0x45);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x4C);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0x4C);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xE0);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x0B);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x1C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x28);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x1C);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x2E);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x78);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0C);
-        memoria.add((byte) 0x06);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xE0);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x98);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA4);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB6);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x44);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x4B);
-        memoria.add((byte) 0x45);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0x4E);
-        memoria.add((byte) 0x45);
-        memoria.add((byte) 0x4C);
-        memoria.add((byte) 0x33);
-        memoria.add((byte) 0x32);
-        memoria.add((byte) 0x2E);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x98);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA4);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB6);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x45);
-        memoria.add((byte) 0x78);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x63);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x47);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x48);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x46);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x57);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x46);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x47);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x43);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x4D);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x43);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6E);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x4D);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0xA2);
-        memoria.add((byte) 0x1C);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x31);
-        memoria.add((byte) 0xC0);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0x2C);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x0D);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0xF5);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA3);
-        memoria.add((byte) 0x2C);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0x1C);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x0C);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x09);
-        memoria.add((byte) 0xC0);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0xEC);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x57);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x69);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x60);
-        memoria.add((byte) 0x31);
-        memoria.add((byte) 0xC0);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x37);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0xF6);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA3);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0xD0);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0x25);
-        memoria.add((byte) 0xD0);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x35);
-        memoria.add((byte) 0xD0);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x35);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x14);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xA1);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0xD4);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x68);
-        memoria.add((byte) 0xBE);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x09);
-        memoria.add((byte) 0xC0);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x90);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x6A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0xB6);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0xBE);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0xD4);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0xB8);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0x65);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x6F);
-        memoria.add((byte) 0x72);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x60);
-        memoria.add((byte) 0x89);
-        memoria.add((byte) 0xC6);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0xC0);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x06);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x46);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xE1);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xEB);
-        memoria.add((byte) 0xF2);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x90);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xC9);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x0D);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xB9);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xB2);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x4E);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xA2);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xCB);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xC4);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xBD);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x07);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xB6);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xAF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xA8);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xA1);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x06);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x9A);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x93);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7D);
-        memoria.add((byte) 0x0B);
-        memoria.add((byte) 0x50);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x4C);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xD8);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0xEF);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0xD1);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x27);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x8C);
-        memoria.add((byte) 0x95);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0xA0);
-        memoria.add((byte) 0x86);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x7B);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x42);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x61);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0x96);
-        memoria.add((byte) 0x98);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x47);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xE1);
-        memoria.add((byte) 0xF5);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xCA);
-        memoria.add((byte) 0x9A);
-        memoria.add((byte) 0x3B);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0x13);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xCA);
-        memoria.add((byte) 0x9A);
-        memoria.add((byte) 0x3B);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x18);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xE1);
-        memoria.add((byte) 0xF5);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x05);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0x96);
-        memoria.add((byte) 0x98);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xF2);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x42);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xDF);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0xA0);
-        memoria.add((byte) 0x86);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x27);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xB9);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xA6);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x64);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x93);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x52);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x58);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x7A);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x15);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x10);
-        memoria.add((byte) 0x40);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x51);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xA2);
-        memoria.add((byte) 0xFD);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x5B);
-        memoria.add((byte) 0x59);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x0D);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0x34);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0x94);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0x09);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0xDB);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x39);
-        memoria.add((byte) 0x7F);
-        memoria.add((byte) 0xD7);
-        memoria.add((byte) 0x2C);
-        memoria.add((byte) 0x30);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0xD0);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x0C);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0xBF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x3C);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xEB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0xCC);
-        memoria.add((byte) 0x0C);
-        memoria.add((byte) 0x7F);
-        memoria.add((byte) 0xA8);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x34);
-        memoria.add((byte) 0x33);
-        memoria.add((byte) 0x33);
-        memoria.add((byte) 0xF3);
-        memoria.add((byte) 0x7C);
-        memoria.add((byte) 0xA0);
-        memoria.add((byte) 0x88);
-        memoria.add((byte) 0xC7);
-        memoria.add((byte) 0xB8);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0xF8);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x7F);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x13);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x07);
-        memoria.add((byte) 0x7E);
-        memoria.add((byte) 0x0E);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0x7F);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x8F);
-        memoria.add((byte) 0x76);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x88);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x74);
-        memoria.add((byte) 0x04);
-        memoria.add((byte) 0x01);
-        memoria.add((byte) 0xC1);
-        memoria.add((byte) 0xEB);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x29);
-        memoria.add((byte) 0xC8);
-        memoria.add((byte) 0x91);
-        memoria.add((byte) 0x88);
-        memoria.add((byte) 0xF8);
-        memoria.add((byte) 0x51);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xC3);
-        memoria.add((byte) 0xFD);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x5B);
-        memoria.add((byte) 0x59);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0x4A);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x51);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x7A);
-        memoria.add((byte) 0xFC);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x20);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x73);
-        memoria.add((byte) 0xFC);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x6C);
-        memoria.add((byte) 0xFC);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x5B);
-        memoria.add((byte) 0x59);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x07);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0x25);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x07);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0x11);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x89);
-        memoria.add((byte) 0xC8);
-        memoria.add((byte) 0xB9);
-        memoria.add((byte) 0x0A);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0xBA);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x3D);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x7D);
-        memoria.add((byte) 0x08);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xD8);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xD8);
-        memoria.add((byte) 0xEB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0xF7);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x89);
-        memoria.add((byte) 0xC1);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x85);
-        memoria.add((byte) 0xE6);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0xDD);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0xD6);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x85);
-        memoria.add((byte) 0xCD);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xB0);
-        memoria.add((byte) 0x2D);
-        memoria.add((byte) 0x51);
-        memoria.add((byte) 0x53);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0xFD);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x5B);
-        memoria.add((byte) 0x59);
-        memoria.add((byte) 0xB3);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0xE9);
-        memoria.add((byte) 0xBB);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x03);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0xB2);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x80);
-        memoria.add((byte) 0xFB);
-        memoria.add((byte) 0x02);
-        memoria.add((byte) 0x75);
-        memoria.add((byte) 0x0C);
-        memoria.add((byte) 0x81);
-        memoria.add((byte) 0xF9);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x00);
-        memoria.add((byte) 0x0F);
-        memoria.add((byte) 0x84);
-        memoria.add((byte) 0xA1);
-        memoria.add((byte) 0xFE);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x51);
-        memoria.add((byte) 0xE8);
-        memoria.add((byte) 0x14);
-        memoria.add((byte) 0xFD);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0xFF);
-        memoria.add((byte) 0x59);
-        memoria.add((byte) 0x89);
-        memoria.add((byte) 0xC8);
-        memoria.add((byte) 0xC3);
-        System.out.println("----------------- HEADER CARGADO -----------------");
-    }
-
-    public void generarArchivoExe() {
-        try {
-            FileOutputStream archivo = new FileOutputStream(getFileOutPath().replace(".exe", "_mio.exe"));
-            for (byte b : memoria) {
-                archivo.write(b);
-            }
-            archivo.close();
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    public int getPosicionActual() {
+    public int getSize() {
         return memoria.size();
     }
 
-    public void mostrarByteCargado() {
-        System.out.println("0x"
-                + String.format("%02X --> %02X", memoria.size() - 1, memoria.get(memoria.size() - 1) & 0xFF)
-                        .toUpperCase());
-
+    public GeneradorDeCodigo() {
+        cargarEncabezadosYRutinas();
     }
 
-    public int buscarEnteroEn(int pos) {
-        return memoria.get(pos)
-                + memoria.get(pos + 1) * 0x100
-                + memoria.get(pos + 2) * 0x10000
-                + memoria.get(pos + 3) * 0x1000000;
+    public void cargarFinalDelPrograma(int cantVar) {
+        //System.out.println(cantVar);
+        //POSICION_FINAL_DEL_PROGRAMA
+        int distancia = POSICION_FINAL_DEL_PROGRAMA - (memoria.size() + 5); //CALL dir
+        cargarByte(0xE9); //CALL dir
+        cargarInt(distancia); //:)
+        fixupEDI();
+        iniciarVars(cantVar);
+        reemplazarTamanoVirtual();
+        reemplazarSizeOfCodSection();
+        reemplazarSizeOfRawData();
+        reemplazarSizeOfImgyBaseOfData();
+        llenarCeros();
     }
 
+    public void GenerarArchivo() throws IOException {
+        // Volcar el ArrayList en el archivo binario
+FileOutputStream archivoWin32 = new FileOutputStream("C:\\INSPT2\\S1\\programa.exe");
+        
+//FileOutputStream archivoWin32 = new FileOutputStream("C:/Users/Fd/Desktop/compilador/archivo00.exe");
+
+        for (Byte bytes : memoria) {
+            archivoWin32.write(bytes);  // Escribir cada byte en el archivo .exe
+        }
+
+        archivoWin32.close();
+        System.out.println("Archivo generado exitosamente");
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //            Operaciones Genrales
+    //
+    ////////////////////////////////////////////////////////////////////////////////////
     public void cargarByte(int valor) {
         memoria.add((byte) valor);
-        mostrarByteCargado();
     }
 
-    public void cargarByte() {
-        memoria.add((byte) 0x00);
-        // mostrarByteCargado();
+    public void cargarByteEn(int posicion, int valor) {
+        memoria.set(posicion, (byte) valor);
     }
 
     public void cargarInt(int valor) {
-        cargarByte((byte) (valor)); // Máscara para el byte menos significativo
-        cargarByte((byte) ((valor) >> 8)); // Máscara para el tercer byte
-        cargarByte((byte) ((valor) >> 16)); // Máscara para el segundo byte
-        cargarByte((byte) ((valor) >> 24)); // Máscara para el byte más significativo
+        memoria.add((byte) valor);           // Byte menos significativo
+        memoria.add((byte) (valor >> 8));
+        memoria.add((byte) (valor >> 16));
+        memoria.add((byte) (valor >> 24));  // Byte más significativo
     }
 
-    public void cargarIntEn(int valor, int posicion) {
-        System.out.println("-- Cargando INT en " + toHexa(posicion) + " --> " + valor + " (" + toHexa(valor) + ") --");
-
-        memoria.set(posicion, (byte) (valor));
-        memoria.set(posicion + 1, (byte) ((valor) >> 8));
-        memoria.set(posicion + 2, (byte) ((valor) >> 16));
-        memoria.set(posicion + 3, (byte) ((valor) >> 24));
-
-        System.out.println("0x" + String.format("%02X --> %02X", posicion, memoria.get(posicion) & 0xFF).toUpperCase());
-        System.out.println(
-                "0x" + String.format("%02X --> %02X", posicion + 1, memoria.get(posicion + 1) & 0xFF).toUpperCase());
-        System.out.println(
-                "0x" + String.format("%02X --> %02X", posicion + 2, memoria.get(posicion + 2) & 0xFF).toUpperCase());
-        System.out.println(
-                "0x" + String.format("%02X --> %02X", posicion + 3, memoria.get(posicion + 3) & 0xFF).toUpperCase());
-
+    public void cargarIntEn(int posicion, int valor) {
+        if (posicion < 0 || posicion + 3 >= memoria.size()) {
+            throw new IndexOutOfBoundsException("posicion de memoria fuera del rango");
+        }
+        memoria.set(posicion, (byte) valor);                 // Byte menos significativo
+        memoria.set(posicion + 1, (byte) (valor >> 8));      // Tercer byte
+        memoria.set(posicion + 2, (byte) (valor >> 16));    // Segundo byte
+        memoria.set(posicion + 3, (byte) (valor >> 24));    // Byte mas significativo
     }
 
-    public void cargarByteEn(int valor, int posicion) {
-        System.out.println("\nCargando byte en " + posicion + ": " + toHexa(posicion));
-        memoria.set(posicion, (byte) valor);
-        System.out.println(String.format("%02X --> %02X", posicion, memoria.get(posicion) & 0xFF).toUpperCase());
+    public void cargarPushEAX() {
+        cargarByte(0x50); //PUSH EAX
     }
 
-    public void cargarDireccionamientoInmediato_B8(int valor) {
-        // MOV EAX, abcdefgh = B8 gh ef cd ab (COPIA EL SEGUNDO OPERANDO EN EL PRIMERO)
-
-        mostrarInicioDeInstruccion("MOV INMEDIATO [ B8 _ _ _ _ ]", 5);
-
-        cargarByte(0xB8);
-        cargarInt(valor);
+    public void cargarPopEAX() {
+        cargarByte(0x58); //POP EAX
     }
 
-    public void cargarDireccionamientoIndexado_8B_87(int valor) {
-        // MOV EAX, [EDI+abcdefgh] = 8B 87 gh ef cd ab
-        mostrarInicioDeInstruccion("MOV INDEXADO [ 8B 87 _ _ _ _ ]", 6);
+    public void cargarPopEBX() {
+        cargarByte(0x5B); //POP EAX
+    }
 
+    public void cargarMovEAX_var(int valor) {
         cargarByte(0x8B);
         cargarByte(0x87);
         cargarInt(valor);
     }
 
-    public void asignarAVariable(int valorVar) {
-
-        popEAX_58();
-        cargarDireccionamientoIndexadoEAX_89_87(valorVar);
-    }
-
-    private void cargarDireccionamientoIndexadoEAX_89_87(int valorVar) {
-        // MOV [EDI+abcdefgh], EAX = 89 87 gh ef cd ab
-        mostrarInicioDeInstruccion("MOV INDEXADO EAX  [ 89 87 _ _ _ _ ]", 6);
-
-        cargarByte(0x89);
-        cargarByte(0x87);
-        cargarInt(valorVar);
-    }
-
-    public void pushEAX_50() {
-        // PUSH EAX = 50 --> MANDA EL VALOR DEL OPERANDO A LA PILA
-        mostrarInicioDeInstruccion("PUSH EAX [ 50 ]", 1);
-        cargarByte(0x50);
-    }
-
-    public void popEAX_58() {
-        // POP EAX = 58 --> EXTRAE EL VALOR DE LA PILA Y LO COLOCA EN EL OPERANDO
-        mostrarInicioDeInstruccion("POP EAX [ 58 ]", 1);
-        cargarByte(0x58);
-    }
-
-    public void popEBX_5B() {
-        // POP EBX = 5B --> EXTRAE EL VALOR DE LA PILA Y LO COLOCA EN EL OPERANDO
-        mostrarInicioDeInstruccion("POP EBX [ 5B ]", 1);
-        cargarByte(0x5B);
-    }
-
-    public void ret_C3() {
-        // RET = C3 --> RETORNA AL PUNTO DESDE DONDE SE LLAMÓ UNA SUBRUTINA
-        mostrarInicioDeInstruccion("RET [ C3 ]", 1);
-        cargarByte(0xC3);
-    }
-
-    public void callA_E8_____(int distancia) {
-        System.out.println("-- Cargando CALL a " + toHexa(getPosicionActual() + (distancia + 5)) + " --");
-        cargarByte(0xE8); // CALL
-        cargarInt(distancia);
-    }
-
-    public void cargarFor(int dirVar, int hasta) {
-
-        System.out.println(" -- Cargando FOR desde " + toHexa(getPosicionActual()) + " --" + " (dirVar: " + dirVar + " hasta: " + hasta + ")");
-
-        mostrarInicioDeProposicion("FOR");
-
-//ident del for
-        cargarDireccionamientoIndexado_8B_87(dirVar);
-        pushEAX_50();
-// numero del hasta
-        cargarDireccionamientoInmediato_B8(hasta);
-        pushEAX_50();
-
-        generarExpresionCondicional(TipoToken.MENOR_O_IGUAL);
-        // JUMP _ _ _ _
-
-        mostrarFinalDeProposicion("FOR");
-    }
-
-    public void aumentarUno(int dirVar) {
-        int incrementador = 01;
-
-        cargarDireccionamientoIndexado_8B_87(dirVar); // 6 bytes
-        pushEAX_50(); // 1 byte
-
-        cargarDireccionamientoInmediato_B8(incrementador); // 5 bytes
-        pushEAX_50(); // 1 byte
-
-        generarSumar(); // 5 bytes
-
-        popEAX_58(); // 1 byte
-        cargarDireccionamientoIndexadoEAX_89_87(dirVar); // 6 bytes
-
-    }
-
-    public void imulEBX_F7_EB() {
-        // IMUL EBX = F7 EB --> COLOCA EN EDX:EAX EL PRODUCTO DE EAX POR EBX
-
-        mostrarInicioDeInstruccion("IMUL EBX [ F7 EB ]", 2);
-        cargarByte(0xF7);
-        cargarByte(0xEB);
-    }
-
-    public void generarMultiplicacion() {
-        mostrarInicioDeInstruccion("MULTIPLICAR [ 58 5B F7 EB 50 ]:", 5);
-        popEAX_58();
-        popEBX_5B();
-        imulEBX_F7_EB();
-        pushEAX_50();
-    }
-
-    public void generarDividicion() {
-        mostrarInicioDeInstruccion("DIVIDIR [ 58 6b 93 99 F7 FB 50 ]", 7);
-        popEAX_58();
-        popEBX_5B();
-        exchange_93();
-        cargarByte(0x99); // CDQ
-        cargarByte(0xF7); // IDIV EBX
-        cargarByte(0xFB);
-        pushEAX_50();
-    }
-
-    public void generarSumar() {
-        mostrarInicioDeInstruccion("SUMAR [ 58 6B 01 D8 50 ]", 5);
-        popEAX_58();
-        popEBX_5B();
-        add_01_D8();
-        pushEAX_50();
-    }
-
-    public void generarRestar() {
-        mostrarInicioDeInstruccion("RESTAR [ 58 5B 93 D8 50 ]", 5);
-        popEAX_58();
-        popEBX_5B();
-        exchange_93();
-        sub_29_D8();
-        pushEAX_50();
-    }
-
-    public void add_01_D8() {
-        // ADD EAX, EBX = 01 D8 --> SUMA AMBOS OPERANDOS Y COLOCA EL RESULTADO EN EL
-        // PRIMERO (EAX)
-
-        mostrarInicioDeInstruccion("ADD [ 01 D8 ]", 2);
-        cargarByte(0x01);
-        cargarByte(0xD8);
-    }
-
-    public void sub_29_D8() {
-        // SUB EAX, EBX = 29 D8 --> LE RESTA EL SEGUNDO OPERANDO AL PRIMERO Y COLOCA EL
-        // RESULTADO EN EL PRIMER OPERANDO
-
-        mostrarInicioDeInstruccion("ADD [ 01 D8 ]", 2);
-        cargarByte(0x29);
-        cargarByte(0xD8);
-    }
-
-    public void negarTermino() {
-        mostrarInicioDeInstruccion("NEGAR [ 58 F7 D8 50 ]", 4);
-        popEAX_58();
-        cambiarSignoEAX_F7_D8();
-        pushEAX_50();
-    }
-
-    private void cambiarSignoEAX_F7_D8() {
-        // NEG EAX = F7 D8 --> CAMBIA EL SIGNO DE EAX
-        mostrarInicioDeInstruccion("CAMBIAR SIGNO [ F7 D8 ]", 2);
-        cargarByte(0xF7); // F7 D8 CAMBIA EL SIGNO DE EAX
-        cargarByte(0xD8);
-    }
-
-    private void exchange_93() {
-        // XCHG EAX, EBX = 93 --> INTERCAMBIA LOS VALORES DE LOS OPERANDOS
-
-        mostrarInicioDeInstruccion("EXCHANGE [ 93 ]", 1);
-        cargarByte(0x93);
-    }
-
-    public void generarOdd() {
-        // ODD = 58 A8 01 7B 05 E9 00 00 00 00
-
-        mostrarInicioDeInstruccion("ODD [ 58 A8 01 7B 05 E9 00 00 00 00 ]", 10);
-        popEAX_58();
-        cargarByte(0xA8); // TEST AL, ab
-        cargarByte(0x01);
-        cargarByte(0x7B); // JPO dir (si es impar)
-        cargarByte(0x05); // Saltar 5 (para saltear el jump en caso de que tenga que saltar toda la
-        // proposición)
-        reservarJUMP_E9____();
-    }
-
-    public void cargarReadLn(int valorVar) {
-        // CALL, _ _ _ _ (función en el header)
-        mostrarInicioDeProposicion("READLN [ E/S ]");
-
-        int posicionActual = getPosicionActual();
-        int distanciaHaciaES = Constantes.LEER_ENTERO_Y_GUARDAR_EN_EAX - (posicionActual + 5); // + 5 porqué se tienen
-        // en cuenta los 5 bytes
-        // de la instrucción
-        // siguiente (CALL)
-        callA_E8_____(distanciaHaciaES);
-
-        cargarDireccionamientoIndexadoEAX_89_87(valorVar);
-
-        mostrarFinalDeProposicion("READLN");
-    }
-
-    public void writeEntero() {
-        // CALL, _ _ _ _ (función en el header)
-        mostrarInicioDeProposicion("WRITE ENTERO [ E/S ]");
-
-        popEAX_58();
-
-        int posicionActual = getPosicionActual();
-        int distanciaHaciaES = Constantes.IMPRIMIR_ENTERO_DE_EAX - (posicionActual + 5);
-        callA_E8_____(distanciaHaciaES);
-
-        mostrarFinalDeProposicion("WRITE ENTERO");
-    }
-
-    public void writeln() {
-        // CALL, _ _ _ _ (función en el header)
-
-        mostrarInicioDeProposicion("WRITELN [ E/S ]");
-
-        int posicionActual = getPosicionActual();
-        int distanciaHaciaES = Constantes.IMPRIMIR_SALTO_DE_LINEA - (posicionActual + 5);
-        callA_E8_____(distanciaHaciaES);
-
-        mostrarFinalDeProposicion("WRITELN");
-    }
-
-    public void writeCadena(String cadena) {
-
-        mostrarInicioDeProposicion("WRITE CADENA [ E/S ]");
-
-        /*
-         * 1. Se genera la inicialización de EAX con la ubicación absoluta que
-         * tendrá la cadena (se conoce porque la longitud de los pasos 2 y 3
-         * es fija), usando para calcularla los campos BaseOfCode (posiciones
-         * 204-207, o 00CC-00CF en hexadecimal) e ImageBase (posiciones 212-
-         * 215, o 00D4-00D7 en hexadecimal) del encabezado del archivo
-         * ejecutable;
-         */
-        int baseOfCodePosicion = buscarEnteroEn(Constantes.BASE_OF_CODE_POSICION); // Inicio de la sección de código
-        int imageBasePosicion = buscarEnteroEn(Constantes.IMAGE_BASE_POSICION); // Base de la imagen
-        int posicionActual = getPosicionActual(); // Posición actual en la memoria
-        int inicioDeCadena = 15; // Posición de inicio de la cadena (después de las siguientes 3 instrucciones de
-        // 5 bytes c/u)
-        int tamanoHeader = buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION); // Tamaño del header
-
-        int ubiCadena = baseOfCodePosicion + imageBasePosicion + posicionActual + inicioDeCadena - tamanoHeader;
-
-        cargarDireccionamientoInmediato_B8(ubiCadena);
-
-        // 2. Se genera la invocación a la rutina de E/S que mostrará la cadena;
-        int distanciaHaciaES = Constantes.IMPRIMIR_CADENA - (getPosicionActual() + 5); // + 5 porqué se tienen en cuenta los 5
-        // bytes de la instrucción siguiente (CALL)
-        callA_E8_____(distanciaHaciaES);
-
-        // 3. Se genera un salto incondicional E9 00 00 00 00;
-        // reservarJUMP();
-        int tamanoCadena = cadena.length();
-        int comillasSimples = 2; // La cadena tiene comillas simples al principio y al final (se las sacamos)
-        int ceroFinal = 1; // Tiene un cero al final de la cadena (se lo agregamos)
-
-        int tamanoFinalDeCadena = tamanoCadena - comillasSimples + ceroFinal;
-
-        // cargarByte(0xe9);
-        // cargarInt(tamanoFinalDeCadena);
-        jumpA_E9____(tamanoFinalDeCadena);
-        // int jumpPosicion = getPosicionActual();
-
-        // 4. Se generan los bytes de la cadena, seguidos de un cero;
-        mostrarInicioDeInstruccion("ASCII CADENA", tamanoFinalDeCadena);
-        for (int i = 1; i < tamanoCadena - 1; i++) {
-            char c = cadena.charAt(i);
-            if (MOSTRAR_CARACTERES_ASCII) {
-                System.out.println(c);
-            }
-            cargarByte(c);
-        }
-        cargarByte(0);
-
-        // 5. Se realiza el fix-up del salto colocado en el paso 3. (No hace falta
-        // porque se cargo bien de inicio)
-        // int cadenaFinal = getPosicionActual();
-        // cargarIntEn(cadenaFinal, jumpPosicion - 4);
-        mostrarFinalDeProposicion("WRITE CADENA");
-    }
-
-    public void reservarJUMP_E9____() {
-        // RESERVAR JUMP = E9 00 00 00 00 --> RESERVA ESPACIO PARA EL JUMP YA QUE NO SE
-        // CONOCE LA CANTIDAD DE BYTES
-        mostrarInicioDeInstruccion("JUMP | E9 _ _ _ _ |", 5);
-        cargarByte(0xE9); // JMP dir
-        cargarByte(0x00);
-        cargarByte(0x00);
-        cargarByte(0x00);
-        cargarByte(0x00);
-    }
-
-    public void jumpA_E9____(int valor) {
-        // CUANDO SE CONOCE EL VALOR DEL JUMP
-        System.out.println("-- Cargando JUMP con valor: " + valor + " (" + toHexa(valor) + ") --");
-        cargarByte(0xE9); // JMP dir
+    public void cargarMovEAX_num(int valor) {
+        cargarByte(0xB8);
         cargarInt(valor);
     }
 
-    public void comparereEAXyBAX_39_C3() {
-        // CMP EAX, EBX = 39 C3 --> COMPARA EL PRIMER OPERANDO CON EL SEGUNDO PARA QUE,
-        // SEGÚN EL RESULTADO DE LA COMPARACIÓN, PUEDAN HACERSE SALTOS CONDICIONALES A
-        // CONTINUACIÓN
-
-        mostrarInicioDeInstruccion("CMP AEX BEX", EDI);
-        cargarByte(0x39); // CMP EAX, EBX
-        cargarByte(0xC3);
+    public void cargarMovVar_EAX(int valor) {
+        cargarByte(0x89);
+        cargarByte(0x87);
+        cargarInt(valor);
     }
 
-    public void generarExpresionCondicional(TipoToken expCond) {
-        // EXPRESION CONDICIONAL = 58 5B 39 C3
+    public void cargarXchgEAX_EBX() {
+        cargarByte(0x93);
+    }
 
-        mostrarInicioDeInstruccion("EXPRESION CONDICIONAL", 11);
-        popEAX_58();
-        popEBX_5B();
-        comparereEAXyBAX_39_C3();
+    public void cargarJMP(int valor) {
+        cargarByte(0xE9); //JUMP
+        cargarInt(valor);  //VALOR DEL JUMP
+    }
 
-        switch (expCond) {
-            case TipoToken.IGUAL:
-                cargarByte(0x74);
-                break;
-            case TipoToken.DIFERENTE:
-                cargarByte(0x75);
-                break;
-            case TipoToken.MENOR:
-                cargarByte(0x7C);
-                break;
-            case TipoToken.MENOR_O_IGUAL:
-                cargarByte(0x7E);
-                break;
-            case TipoToken.MAYOR:
+    public void cargarCALL(int valor) {
+        cargarByte(0xE8); //JUMP
+        cargarInt(valor);  //VALOR DEL JUMP
+    }
+
+    public void cargarEncabezadosYRutinas() {
+        int[] encabezado = {0x4D, 0x5A, 0x60, 0x01, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA0, 0x00, 0x00, 0x00, 0x0E, 0x1F, 0xBA, 0x0E, 0x00, 0xB4, 0x09, 0xCD, 0x21, 0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x54, 0x68, 0x69, 0x73, 0x20, 0x70, 0x72, 0x6F, 0x67, 0x72, 0x61, 0x6D, 0x20, 0x69, 0x73, 0x20, 0x61, 0x20, 0x57, 0x69, 0x6E, 0x33, 0x32, 0x20, 0x63, 0x6F, 0x6E, 0x73, 0x6F, 0x6C, 0x65, 0x20, 0x61, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2E, 0x20, 0x49, 0x74, 0x20, 0x63, 0x61, 0x6E, 0x6E, 0x6F, 0x74, 0x20, 0x62, 0x65, 0x20, 0x72, 0x75, 0x6E, 0x20, 0x75, 0x6E, 0x64, 0x65, 0x72, 0x20, 0x4D, 0x53, 0x2D, 0x44, 0x4F, 0x53, 0x2E, 0x0D, 0x0A, 0x24, 0x00, 0x00, 0x00, 0x00, 0x50, 0x45, 0x00, 0x00, 0x4C, 0x01, 0x01, 0x00, 0x00, 0x00, 0x53, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x00, 0x02, 0x01, 0x0B, 0x01, 0x01, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1C, 0x10, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2E, 0x74, 0x65, 0x78, 0x74, 0x00, 0x00, 0x00, 0x0C, 0x06, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6E, 0x10, 0x00, 0x00, 0x7C, 0x10, 0x00, 0x00, 0x8C, 0x10, 0x00, 0x00, 0x98, 0x10, 0x00, 0x00, 0xA4, 0x10, 0x00, 0x00, 0xB6, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x44, 0x10, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4B, 0x45, 0x52, 0x4E, 0x45, 0x4C, 0x33, 0x32, 0x2E, 0x64, 0x6C, 0x6C, 0x00, 0x00, 0x6E, 0x10, 0x00, 0x00, 0x7C, 0x10, 0x00, 0x00, 0x8C, 0x10, 0x00, 0x00, 0x98, 0x10, 0x00, 0x00, 0xA4, 0x10, 0x00, 0x00, 0xB6, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x78, 0x69, 0x74, 0x50, 0x72, 0x6F, 0x63, 0x65, 0x73, 0x73, 0x00, 0x00, 0x00, 0x47, 0x65, 0x74, 0x53, 0x74, 0x64, 0x48, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x00, 0x00, 0x00, 0x00, 0x52, 0x65, 0x61, 0x64, 0x46, 0x69, 0x6C, 0x65, 0x00, 0x00, 0x00, 0x00, 0x57, 0x72, 0x69, 0x74, 0x65, 0x46, 0x69, 0x6C, 0x65, 0x00, 0x00, 0x00, 0x47, 0x65, 0x74, 0x43, 0x6F, 0x6E, 0x73, 0x6F, 0x6C, 0x65, 0x4D, 0x6F, 0x64, 0x65, 0x00, 0x00, 0x00, 0x00, 0x53, 0x65, 0x74, 0x43, 0x6F, 0x6E, 0x73, 0x6F, 0x6C, 0x65, 0x4D, 0x6F, 0x64, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0xA2, 0x1C, 0x11, 0x40, 0x00, 0x31, 0xC0, 0x03, 0x05, 0x2C, 0x11, 0x40, 0x00, 0x75, 0x0D, 0x6A, 0xF5, 0xFF, 0x15, 0x04, 0x10, 0x40, 0x00, 0xA3, 0x2C, 0x11, 0x40, 0x00, 0x6A, 0x00, 0x68, 0x30, 0x11, 0x40, 0x00, 0x6A, 0x01, 0x68, 0x1C, 0x11, 0x40, 0x00, 0x50, 0xFF, 0x15, 0x0C, 0x10, 0x40, 0x00, 0x09, 0xC0, 0x75, 0x08, 0x6A, 0x00, 0xFF, 0x15, 0x00, 0x10, 0x40, 0x00, 0x81, 0x3D, 0x30, 0x11, 0x40, 0x00, 0x01, 0x00, 0x00, 0x00, 0x75, 0xEC, 0x58, 0xC3, 0x00, 0x57, 0x72, 0x69, 0x74, 0x65, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x31, 0xC0, 0x03, 0x05, 0xCC, 0x11, 0x40, 0x00, 0x75, 0x37, 0x6A, 0xF6, 0xFF, 0x15, 0x04, 0x10, 0x40, 0x00, 0xA3, 0xCC, 0x11, 0x40, 0x00, 0x68, 0xD0, 0x11, 0x40, 0x00, 0x50, 0xFF, 0x15, 0x10, 0x10, 0x40, 0x00, 0x80, 0x25, 0xD0, 0x11, 0x40, 0x00, 0xF9, 0xFF, 0x35, 0xD0, 0x11, 0x40, 0x00, 0xFF, 0x35, 0xCC, 0x11, 0x40, 0x00, 0xFF, 0x15, 0x14, 0x10, 0x40, 0x00, 0xA1, 0xCC, 0x11, 0x40, 0x00, 0x6A, 0x00, 0x68, 0xD4, 0x11, 0x40, 0x00, 0x6A, 0x01, 0x68, 0xBE, 0x11, 0x40, 0x00, 0x50, 0xFF, 0x15, 0x08, 0x10, 0x40, 0x00, 0x09, 0xC0, 0x61, 0x90, 0x75, 0x08, 0x6A, 0x00, 0xFF, 0x15, 0x00, 0x10, 0x40, 0x00, 0x0F, 0xB6, 0x05, 0xBE, 0x11, 0x40, 0x00, 0x81, 0x3D, 0xD4, 0x11, 0x40, 0x00, 0x01, 0x00, 0x00, 0x00, 0x74, 0x05, 0xB8, 0xFF, 0xFF, 0xFF, 0xFF, 0xC3, 0x00, 0x52, 0x65, 0x61, 0x64, 0x20, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x89, 0xC6, 0x30, 0xC0, 0x02, 0x06, 0x74, 0x08, 0x46, 0xE8, 0xE1, 0xFE, 0xFF, 0xFF, 0xEB, 0xF2, 0x61, 0x90, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x30, 0xE8, 0xC9, 0xFE, 0xFF, 0xFF, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB0, 0x0D, 0xE8, 0xB9, 0xFE, 0xFF, 0xFF, 0xB0, 0x0A, 0xE8, 0xB2, 0xFE, 0xFF, 0xFF, 0xC3, 0x00, 0x3D, 0x00, 0x00, 0x00, 0x80, 0x75, 0x4E, 0xB0, 0x2D, 0xE8, 0xA2, 0xFE, 0xFF, 0xFF, 0xB0, 0x02, 0xE8, 0xCB, 0xFF, 0xFF, 0xFF, 0xB0, 0x01, 0xE8, 0xC4, 0xFF, 0xFF, 0xFF, 0xB0, 0x04, 0xE8, 0xBD, 0xFF, 0xFF, 0xFF, 0xB0, 0x07, 0xE8, 0xB6, 0xFF, 0xFF, 0xFF, 0xB0, 0x04, 0xE8, 0xAF, 0xFF, 0xFF, 0xFF, 0xB0, 0x08, 0xE8, 0xA8, 0xFF, 0xFF, 0xFF, 0xB0, 0x03, 0xE8, 0xA1, 0xFF, 0xFF, 0xFF, 0xB0, 0x06, 0xE8, 0x9A, 0xFF, 0xFF, 0xFF, 0xB0, 0x04, 0xE8, 0x93, 0xFF, 0xFF, 0xFF, 0xB0, 0x08, 0xE8, 0x8C, 0xFF, 0xFF, 0xFF, 0xC3, 0x3D, 0x00, 0x00, 0x00, 0x00, 0x7D, 0x0B, 0x50, 0xB0, 0x2D, 0xE8, 0x4C, 0xFE, 0xFF, 0xFF, 0x58, 0xF7, 0xD8, 0x3D, 0x0A, 0x00, 0x00, 0x00, 0x0F, 0x8C, 0xEF, 0x00, 0x00, 0x00, 0x3D, 0x64, 0x00, 0x00, 0x00, 0x0F, 0x8C, 0xD1, 0x00, 0x00, 0x00, 0x3D, 0xE8, 0x03, 0x00, 0x00, 0x0F, 0x8C, 0xB3, 0x00, 0x00, 0x00, 0x3D, 0x10, 0x27, 0x00, 0x00, 0x0F, 0x8C, 0x95, 0x00, 0x00, 0x00, 0x3D, 0xA0, 0x86, 0x01, 0x00, 0x7C, 0x7B, 0x3D, 0x40, 0x42, 0x0F, 0x00, 0x7C, 0x61, 0x3D, 0x80, 0x96, 0x98, 0x00, 0x7C, 0x47, 0x3D, 0x00, 0xE1, 0xF5, 0x05, 0x7C, 0x2D, 0x3D, 0x00, 0xCA, 0x9A, 0x3B, 0x7C, 0x13, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x00, 0xCA, 0x9A, 0x3B, 0xF7, 0xFB, 0x52, 0xE8, 0x18, 0xFF, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x00, 0xE1, 0xF5, 0x05, 0xF7, 0xFB, 0x52, 0xE8, 0x05, 0xFF, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x80, 0x96, 0x98, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0xF2, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x40, 0x42, 0x0F, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0xDF, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0xA0, 0x86, 0x01, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0xCC, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x10, 0x27, 0x00, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0xB9, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0xE8, 0x03, 0x00, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0xA6, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x64, 0x00, 0x00, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0x93, 0xFE, 0xFF, 0xFF, 0x58, 0xBA, 0x00, 0x00, 0x00, 0x00, 0xBB, 0x0A, 0x00, 0x00, 0x00, 0xF7, 0xFB, 0x52, 0xE8, 0x80, 0xFE, 0xFF, 0xFF, 0x58, 0xE8, 0x7A, 0xFE, 0xFF, 0xFF, 0xC3, 0x00, 0xFF, 0x15, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0xB9, 0x00, 0x00, 0x00, 0x00, 0xB3, 0x03, 0x51, 0x53, 0xE8, 0xA2, 0xFD, 0xFF, 0xFF, 0x5B, 0x59, 0x3C, 0x0D, 0x0F, 0x84, 0x34, 0x01, 0x00, 0x00, 0x3C, 0x08, 0x0F, 0x84, 0x94, 0x00, 0x00, 0x00, 0x3C, 0x2D, 0x0F, 0x84, 0x09, 0x01, 0x00, 0x00, 0x3C, 0x30, 0x7C, 0xDB, 0x3C, 0x39, 0x7F, 0xD7, 0x2C, 0x30, 0x80, 0xFB, 0x00, 0x74, 0xD0, 0x80, 0xFB, 0x02, 0x75, 0x0C, 0x81, 0xF9, 0x00, 0x00, 0x00, 0x00, 0x75, 0x04, 0x3C, 0x00, 0x74, 0xBF, 0x80, 0xFB, 0x03, 0x75, 0x0A, 0x3C, 0x00, 0x75, 0x04, 0xB3, 0x00, 0xEB, 0x02, 0xB3, 0x01, 0x81, 0xF9, 0xCC, 0xCC, 0xCC, 0x0C, 0x7F, 0xA8, 0x81, 0xF9, 0x34, 0x33, 0x33, 0xF3, 0x7C, 0xA0, 0x88, 0xC7, 0xB8, 0x0A, 0x00, 0x00, 0x00, 0xF7, 0xE9, 0x3D, 0x08, 0x00, 0x00, 0x80, 0x74, 0x11, 0x3D, 0xF8, 0xFF, 0xFF, 0x7F, 0x75, 0x13, 0x80, 0xFF, 0x07, 0x7E, 0x0E, 0xE9, 0x7F, 0xFF, 0xFF, 0xFF, 0x80, 0xFF, 0x08, 0x0F, 0x8F, 0x76, 0xFF, 0xFF, 0xFF, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x88, 0xF9, 0x80, 0xFB, 0x02, 0x74, 0x04, 0x01, 0xC1, 0xEB, 0x03, 0x29, 0xC8, 0x91, 0x88, 0xF8, 0x51, 0x53, 0xE8, 0xC3, 0xFD, 0xFF, 0xFF, 0x5B, 0x59, 0xE9, 0x53, 0xFF, 0xFF, 0xFF, 0x80, 0xFB, 0x03, 0x0F, 0x84, 0x4A, 0xFF, 0xFF, 0xFF, 0x51, 0x53, 0xB0, 0x08, 0xE8, 0x7A, 0xFC, 0xFF, 0xFF, 0xB0, 0x20, 0xE8, 0x73, 0xFC, 0xFF, 0xFF, 0xB0, 0x08, 0xE8, 0x6C, 0xFC, 0xFF, 0xFF, 0x5B, 0x59, 0x80, 0xFB, 0x00, 0x75, 0x07, 0xB3, 0x03, 0xE9, 0x25, 0xFF, 0xFF, 0xFF, 0x80, 0xFB, 0x02, 0x75, 0x0F, 0x81, 0xF9, 0x00, 0x00, 0x00, 0x00, 0x75, 0x07, 0xB3, 0x03, 0xE9, 0x11, 0xFF, 0xFF, 0xFF, 0x89, 0xC8, 0xB9, 0x0A, 0x00, 0x00, 0x00, 0xBA, 0x00, 0x00, 0x00, 0x00, 0x3D, 0x00, 0x00, 0x00, 0x00, 0x7D, 0x08, 0xF7, 0xD8, 0xF7, 0xF9, 0xF7, 0xD8, 0xEB, 0x02, 0xF7, 0xF9, 0x89, 0xC1, 0x81, 0xF9, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x85, 0xE6, 0xFE, 0xFF, 0xFF, 0x80, 0xFB, 0x02, 0x0F, 0x84, 0xDD, 0xFE, 0xFF, 0xFF, 0xB3, 0x03, 0xE9, 0xD6, 0xFE, 0xFF, 0xFF, 0x80, 0xFB, 0x03, 0x0F, 0x85, 0xCD, 0xFE, 0xFF, 0xFF, 0xB0, 0x2D, 0x51, 0x53, 0xE8, 0xFD, 0xFB, 0xFF, 0xFF, 0x5B, 0x59, 0xB3, 0x02, 0xE9, 0xBB, 0xFE, 0xFF, 0xFF, 0x80, 0xFB, 0x03, 0x0F, 0x84, 0xB2, 0xFE, 0xFF, 0xFF, 0x80, 0xFB, 0x02, 0x75, 0x0C, 0x81, 0xF9, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x84, 0xA1, 0xFE, 0xFF, 0xFF, 0x51, 0xE8, 0x14, 0xFD, 0xFF, 0xFF, 0x59, 0x89, 0xC8, 0xC3};
+        int m = 0;
+        for (int n : encabezado) {
+            memoria.add((byte) n);
+            m++;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //
+    //        OPERACIONES MATEMATICAS: (Expresion)
+    //
+    //////////////////////////////////////////////////////////////////////
+    public void suma() {
+        cargarPopEAX(); //POP EAX
+        cargarPopEBX(); //POP EBX
+        cargarByte(0x01); //ADD EAX, EBX (primer mitad)
+        cargarByte(0xD8); //ADD EAX, EBX (segunda mitad)
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void incrementarEnUno(int valor) {
+
+        generarFactorVar(valor);  //carga la variable a incrementar en la pila
+        cargarMovEAX_num(0x1);
+        cargarPushEAX();   //carga un 1 en la pila
+        suma();             //los suma
+        cargarAsignacion(valor); //asigna el resultado a la variable a incrementar
+
+    }
+    
+     public void decrementarEnUno(int valor) {
+
+        generarFactorVar(valor);  //carga la variable a incrementar en la pila
+        cargarMovEAX_num(0x1);
+        cargarPushEAX();   //carga un 1 en la pila
+        resta();             //los suma
+        cargarAsignacion(valor); //asigna el resultado a la variable a incrementar
+
+    }
+
+    public void resta() {
+        // System.out.println("cargando la resta");
+        cargarPopEAX(); //POP EAX
+        cargarPopEBX(); //POP EBX
+        cargarXchgEAX_EBX();
+        cargarByte(0x29); //SUB EAX, EBX
+        cargarByte(0xD8); //SUB EAX, EBX
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void menosUnario() {
+        cargarPopEAX(); //POP EAX
+        cargarByte(0xF7); //NEG EAX (primer byte)
+        cargarByte(0xD8); //NEG EAX (segundo byte)
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void multiplicacion() {
+        cargarPopEAX(); //POP EAX
+        cargarPopEBX(); //POP EBX
+        cargarByte(0xF7); //IMUL EBX (1er byte)
+        cargarByte(0xEB); //IMUL EBX (2d0 byte)
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void divicion() {
+        cargarPopEAX(); //POP EAX
+        cargarPopEBX(); //POP EBX
+        cargarXchgEAX_EBX();
+        cargarByte(0x99); //CDQ
+        cargarByte(0xF7); //IDIV EBX (1er byte)
+        cargarByte(0xFB); //IDIV EBX (2do byte)
+        cargarPushEAX(); //PUSH EAX
+    }
+
+/////////////////////////////////////////////////////////////////////
+//    
+//                     FACTOR
+//
+///////////////////////////////////////////////////////////////////
+    public void generarFactorVar(int valor) {
+        cargarMovEAX_var(valor);
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void generarFactorConst(int valor) {
+        cargarMovEAX_num(valor);
+        cargarPushEAX();//PUSH EAX
+    }
+
+    public void generarFactorNum(int valor) {
+        cargarMovEAX_num(valor);
+        cargarPushEAX();//PUSH EAX
+    }
+
+/////////////////////////////////////////////////////////////////
+//
+//                      Condicion
+//
+//////////////////////////////////////////////////////////////////////
+    public void cargarCondicion(String operador) {
+        cargarPopEAX(); //POP EAX
+        cargarPopEBX();//POP EBX
+        cargarByte(0x39);
+        cargarByte(0xC3);
+
+        switch (operador) {
+
+            case ">":
                 cargarByte(0x7F);
                 break;
-            case TipoToken.MAYOR_O_IGUAL:
+            case ">=":
                 cargarByte(0x7D);
                 break;
-            default:
-                System.out.println("Error: expresión condicional no válida");
+            case "<":
+                cargarByte(0x7C);
+                break;
+            case "<=":
+                cargarByte(0x7E);
+                break;
+            case "=":
+                cargarByte(0x74);
+                break;
+            case "<>":
+                cargarByte(0x75);
                 break;
         }
-
         cargarByte(0x05);
-        reservarJUMP_E9____();
+        cargarJMP(0);
     }
 
-    void cargarEDI() {
-        System.out.println("---------------------- INICIO DE CARGA DE PROGRAMA (" + toHexa(getPosicionActual() + 1)
-                + ") ----------------------");
+    public void cargarODD() {
 
-        // MOV EDI, abcdefgh = BF gh ef cd ab --> (COPIA EL SEGUNDO OPERANDO EN EL
-        // PRIMERO)
-        // Luego se asignará el valor de EDI a la variable correspondiente (SIEMPRE ES
-        // 0040157A)
+        cargarPopEAX(); //POP EAX
+        cargarByte(0xA8); //TEST AL, ab
+        cargarByte(0x01); //TEST AL, ab
+        cargarByte(0x7B); //JPO dir
+        cargarByte(0x05);
+        cargarJMP(0);
+
+    }
+
+////////////////////////////////////////////////////////////////////
+//
+//                      PROPOSICION
+//
+//////////////////////////////////////////////////////////////////////
+    public void cargarAsignacion(int valor) {
+        cargarPopEAX(); //POP EAX --> TRAE DESDE LA PILA
+        cargarMovVar_EAX(valor);
+    }
+
+    public void cargarCall(int valor) {
+        //TRAIGO LA DIRECCION EN LA MEMORIA
+        int distancia = valor - (memoria.size() + 5);
+        cargarCALL(distancia);
+    }
+
+    //      For  
+    public void cargarJmpFor(int dirVar, String paso) {
+
+        generarFactorVar(dirVar); //copio el valor de la variable en EAX y pusheo
+
+        if (paso.equals("_downto")) {
+            cargarCondicion("<=");
+        } else if (paso.equals("_to")) {
+            cargarCondicion(">=");
+        }
+    }
+
+    public void incrementarContVueltasFor(int dirVar, String paso) {
+        cargarMovEAX_var(dirVar);
+        cargarPushEAX();
+        cargarMovEAX_num(0x1);
+        cargarPushEAX();
+
+        if (paso.equals("_downto")) {
+            resta();
+        } else if (paso.equals("_to")) {
+            suma();
+        }
+    }
+// 
+//repeat
+//
+
+    public void cargarEvaluacionRepeat() {
+        cargarMovEAX_num(0x1);
+        cargarPushEAX();
+        resta();//le resta uno a la exprecion de control que quedo en la pila (NO ME GUSTA; MISMO PROBLEMA QUE EL FOR ANIDADO)
+
+        cargarMovEAX_num(0x0);
+
+        cargarXchgEAX_EBX(); //lo intercambia con EBX
+        cargarPopEAX(); //POPea EAX (ahora tiene la resta entre el valor y uno)
+        cargarPushEAX(); //y vuelve a ponerlo en la pila, para la siguiente vuelta
+        cargarByte(0x39);
+        cargarByte(0xC3);
+        cargarByte(0x7E);  //copara y salta se se ha completado el num de vueltas
+        cargarByte(0x05);
+        cargarJMP(0);
+
+    }
+
+/////////////////////////////////////////////////////////////////
+//
+//                    READLN--WRITE/WRITELN
+//
+//////////////////////////////////////////////////////////////////////     
+    public void cargarReadln(int valor) {
+
+        int distancia =   POSICION_MEMORIA_READLN - (memoria.size() + 5);
+        cargarCALL(distancia);
+        cargarMovVar_EAX(valor);
+    }
+
+    public void cargarWriteString(String cad) {
+
+        int strPos = memoria.size()
+                +    DESPLAZAMIENTO_STRING//15
+                + traerIntdeMemoria(  POSICION_CODIGO_BASE) //0x1000
+                + traerIntdeMemoria(  POSICION_IMAGEN_BASE) //0x400000
+                - traerIntdeMemoria(  POSICION_TAMANO_HEADER); //0x200
+
+        cargarMovEAX_num(strPos);
+
+        int distancia =   MUESTRA_CADENA - (memoria.size() + 5);
+        cargarCALL(distancia);
+
+        cargarJMP(cad.length() + 1);
+
+        //Genera los byte de la cadena
+        for (int i = 0; i < cad.length(); i++) {
+            memoria.add((byte) cad.charAt(i));
+        }
+        cargarByte(0x00); //seguido de un cero
+    }
+
+    public void cargarWriteresultado() {
+        cargarPopEAX();
+        int distancia =   MUESTRA_INT_EAX - (memoria.size() + 5);
+        cargarCALL(distancia);
+
+    }
+
+    public void cargarSaltoDeLinea() {
+        int posicion = memoria.size();
+        int distancia =   SALTO_DE_LINEA - (posicion + 5);
+
+        cargarCALL(distancia);
+
+    }
+
+    /////////////////////////////////////////////////////////////////
+    //
+    //                     BLOQUE
+    //
+    //////////////////////////////////////////////////////////////////////     
+    public void cargarRET() {
+        cargarByte(0XC3); //al salir de bloque en PROCEDURE debe generarse una instruccion RET (codigo C3) 
+    }
+
+    /////////////////////////////////////////////////////////////////
+    //
+    //                     finalizado el programa
+    //
+    //////////////////////////////////////////////////////////////////////   
+   public void cargarEDI() {
         reservarEDI();
-
-        this.EDI = getPosicionActual() - 4; // - 4 para quedar en BF x<- _ _ _
+        this.EDI = getSize() - 4; // - 4 para quedar en BF x<- _ _ _ 
     }
 
     private void reservarEDI() {
-        mostrarInicioDeInstruccion("Reservando EDI [ BF _ _ _ _ ]", 5);
 
         cargarByte(0xBF);
         cargarByte(0x00);
@@ -2271,164 +426,107 @@ public class GeneradorDeCodigo {
         cargarByte(0x00);
     }
 
-    public void finalDePrograma(int cantVariables) {
-        System.out.println("---------------------- FINAL DE PROGRAMA ----------------------");
-        this.finalDeCodigoCargado = getPosicionActual();
+    public void fixupEDI() {
 
-        actualizarHeader(); // 0 - Actualizar Header
-        fixupEDI(); // 1 - Actualizar EDI
-        reservarMemoriaParaVariables(cantVariables); // 2 - Reservar memoria para variables
-        actualizarVirtualSize(); // 3 - Actualizar VirtualSize
-        rellenarMultiploDeFileAlignment(); // 4 - Rellenar con 0 múltiplo de FileAlignment
-        ajustarSizoOfCodeSection(); // 5 - Ajustar SizeOfCodeSection
-        ajustarSizeOfRawData(); // 5 - Ajustar SizeOfRawData
-        ajustarSizeOfImage(); // 6 - Ajustar SizeOfImage
-        ajustarSizeOfData(); // 6 - Ajustar BaseOfData
+        int posVar = getSize()
+                + traerIntdeMemoria(  POSICION_CODIGO_BASE)//0x1000
+                + traerIntdeMemoria(  POSICION_IMAGEN_BASE)//0x400000
+                - traerIntdeMemoria(  POSICION_TAMANO_HEADER);//
 
-        int programaFinalizado = getPosicionActual();
-
-        System.out.println("\n--------- Programa finalizado en " + programaFinalizado + " bytes ("
-                + toHexa(programaFinalizado) + ") ---------");
+        reemplazarInt(  POSICION_MOV_EDI + 1, posVar);
     }
 
-    private void actualizarHeader() {
-        System.out.println("\n0. Cargando tamaño de programa en HEADER " + finalDeCodigoCargado + " bytes ("
-                + toHexa(finalDeCodigoCargado) + ")\n");
-        int distancia = Constantes.FINALIZAR_PROGRAMA - (finalDeCodigoCargado + 5);
-        jumpA_E9____(distancia);
+    public void reemplazarTamanoVirtual() {
+        //descomponer distancia en 4
+        int tamanoTexto = memoria.size()
+                - traerIntdeMemoria(  POSICION_TAMANO_HEADER);//0x200 -> En esta posicion estara la cadena
+
+        reemplazarInt(  POSICION_TAMANO_VIRTUAL, tamanoTexto);
     }
 
-    private void fixupEDI() {
-        /*
-         * A continuación, se debe hacer un fix-up de la primera instrucción de
-         * la parte de longitud variable de la sección text (MOV EDI, 00000000), ya
-         * que el desplazamiento actual en el archivo ejecutable indica el comienzo
-         * del área de almacenamiento de las variables.
-         */
-
-        System.out.println("\n1. Actualizando EDI\n");
-
-        int posicionActual = getPosicionActual();
-        int baseOfCodePosicion = buscarEnteroEn(Constantes.BASE_OF_CODE_POSICION);
-        int imageBasePosicion = buscarEnteroEn(Constantes.IMAGE_BASE_POSICION);
-        int tamanoHeader = buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
-
-        int posicion = baseOfCodePosicion + imageBasePosicion + posicionActual
-                - tamanoHeader;
-
-        System.out.println("\n\t=== Calculando posición de EDI ===");
-        System.out.println("\tPosición actual     : " + toHexa(posicionActual) + " (" + posicionActual + ")");
-        System.out.println("\tBaseOfCode          : " + toHexa(baseOfCodePosicion) + " (" + baseOfCodePosicion + ")");
-        System.out.println("\tImageBase           : " + toHexa(imageBasePosicion) + " (" + imageBasePosicion + ")");
-        System.out.println("\tTamaño del header   : " + toHexa(tamanoHeader) + " (" + tamanoHeader + ")");
-        System.out.println("\tPosición de EDI     : " + toHexa(posicion) + " (" + posicion + ")\n");
-
-        cargarIntEn(posicion, EDI);
-        System.out.println("\nEDI actualizado a   : " + toHexa(posicion));
-
-    }
-
-    private void reservarMemoriaParaVariables(int cantVariables) {
-        /*
-         * Luego, deben grabarse ceros al final del archivo ejecutable, a razón
-         * de cuatro bytes por cada variable (a esta altura de la compilación, el
-         * número de variables que fueron declaradas ya es conocido).
-         */
-
-        int espacioReservado = 4 * cantVariables;
-        System.out.println("\n2. Reservando espacio para variables: " + cantVariables + " variables\n");
-        System.out.println("\nDesde --> " + toHexa(getPosicionActual() + 1)); // + 1 para que no se incluya el byte actual
-        for (int i = 0; i < espacioReservado; i++) {
-            cargarByte(0);
+    public void llenarCeros() {
+        int aa = traerIntdeMemoria(  POSICION_ALINEAMIENTO_ARCHIVO);
+        while (memoria.size() % aa != 0) {//mientras no sea divisible del alineamiento archivo
+            cargarByte(0x00); //cargo un cero
         }
-        System.out.println("Hasta --> " + toHexa(getPosicionActual()));
     }
 
-    private void actualizarVirtualSize() {
-        /*
-         * Ahora se debe realizar el ajuste del campo VirtualSize del encabezado
-         * de la sección text (posiciones 416-419, o 01A0-01A3 en hexadecimal),
-         * colocando allí el tamaño de la sección text (hasta el momento).
-         */
-
-        int sizeTextSection = getPosicionActual() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
-        System.out.println("\n3. Actualizando VirtualSize\n");
-        cargarIntEn(sizeTextSection, Constantes.VIRTUAL_SIZE_POSICION);
-    }
-
-    private void rellenarMultiploDeFileAlignment() {
-        /*
-         * Después, debe rellenarse el archivo con ceros, para que su tamaño sea
-         * múltiplo del campo FileAlignment del encabezado opcional específico para
-         * Windows (posiciones 220-223, o 00DC-00DF en hexadecimal).
-         */
-
-        int fileAlignment = buscarEnteroEn(Constantes.FILE_ALIGNMENT_POSICION);
-        System.out.println("\n4. Rellenando múltiplo de FileAlignment (" + fileAlignment + " bytes)\n");
-        int posicionActual = getPosicionActual();
-        int cantidadDeCeros = 0;
-
-        System.out.println("Desde --> " + toHexa(getPosicionActual() + 1)); // + 1 para que no se incluya el byte actual
-        while (posicionActual % fileAlignment != 0) {
-            cargarByte();
-            posicionActual++;
-            cantidadDeCeros++;
+    public void iniciarVars(int contador) {
+        for (int i = 0; i < contador; i++) {
+            cargarByte(0x00); //cargo 8 ceros/4 bytes por cada variable declarada
+            cargarByte(0x00);
+            cargarByte(0x00);
+            cargarByte(0x00);
         }
-        System.out.println("Hasta --> " + toHexa(getPosicionActual()));
-        System.out.println("\nSe rellenaron " + cantidadDeCeros + " bytes con 00");
+    }
+
+    public void reemplazarSizeOfCodSection() {
+        int tamanoTexto = memoria.size()
+                - traerIntdeMemoria(  POSICION_TAMANO_HEADER);//0x200 -> En esta posicion estara la cadena
+
+        reemplazarInt(  POSICION_SECCION_CODIGO, tamanoTexto);
+    }
+
+    public void reemplazarSizeOfRawData() {
+        int tamanoTexto = memoria.size()
+                - traerIntdeMemoria(  POSICION_TAMANO_HEADER);//0x200 -> En esta posicion estara la cadena
+
+        reemplazarInt(  POSICION_DATA_PURA, tamanoTexto);
 
     }
 
-    private void ajustarSizoOfCodeSection() {
-        // SizeOfCodeSection (posiciones 188-191, o 00BC-00BF en hexadecimal)
+    public void reemplazarSizeOfImgyBaseOfData() {
+        int tamanoCodSecc = traerIntdeMemoria(  POSICION_SECCION_CODIGO);
+        int tamanoDataPura = traerIntdeMemoria(  POSICION_DATA_PURA);
+        int alinSecc = traerIntdeMemoria(  POSICION_ALINEAMIENTO_SECCION);
 
-        System.out.println("\n5. Ajustando SizeOfCodeSection\n");
-        int sizeTextSection = getPosicionActual() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
-        cargarIntEn(sizeTextSection, Constantes.SIZE_OF_CODE_SECTION_POSICION);
+        int nuevaVar = (2 + tamanoCodSecc / alinSecc) * alinSecc;
+        reemplazarInt(  POSICION_TAMANO_IMAGEN, nuevaVar);
+
+        int nuevaVar2 = (2 + tamanoDataPura / alinSecc) * alinSecc;
+        reemplazarInt(  POSICION_BASE_DATOS, nuevaVar2);
     }
 
-    private void ajustarSizeOfRawData() {
-        // SizeOfRawData (posiciones 424-427, o 01A8-01AB en hexadecimal)
-
-        System.out.println("\n5. Ajustando SizeOfRawData\n");
-        int sizeTextSection = getPosicionActual() - buscarEnteroEn(Constantes.TAMANO_HEADER_POSICION);
-        cargarIntEn(sizeTextSection, Constantes.SIZE_OF_RAW_DATA_POSICION);
+    public int traerIntdeMemoria(int p) {
+        int resultado = memoria.get(p)
+                + memoria.get(p + 1) * 0x100
+                + memoria.get(p + 2) * 0x10000
+                + memoria.get(p + 3) * (256 * 256 * 256);
+        return resultado;
     }
 
-    private void ajustarSizeOfImage() {
-        // SizeOfImage (posiciones 240-243, o 00F0-00F3 en hexadecimal)
-
-        System.out.println("\n6. Ajustando SizeOfImage\n");
-        int sizeOfCodeSection = buscarEnteroEn(Constantes.SIZE_OF_CODE_SECTION_POSICION);
-        int sectionAlignment = buscarEnteroEn(Constantes.SECTION_ALIGNMENT_POSICION);
-
-        cargarIntEn((2 + sizeOfCodeSection / sectionAlignment) * sectionAlignment, Constantes.SIZE_OF_IMAGE_POSICION);
+    public void reemplazarInt(int pos, int a) {
+        int revInt = revertirInteger(a);
+        Byte[] b = intAByteArray(revInt);
+        for (int i = 0; i < 4; i++) {
+            memoria.set(pos + i, b[i]);
+        }
     }
 
-    private void ajustarSizeOfData() {
-        // SizeOfImage (posiciones 240-243, o 00F0-00F3 en hexadecimal)
+    public static int revertirInteger(int valor) {
+        int b1 = (valor >> 0) & 0xff;
+        int b2 = (valor >> 8) & 0xff;
+        int b3 = (valor >> 16) & 0xff;
+        int b4 = (valor >> 24) & 0xff;
 
-        System.out.println("\n6. Ajustando BaseOfData\n");
-        int sizeOfRawData = buscarEnteroEn(Constantes.SIZE_OF_RAW_DATA_POSICION);
-        int sectionAlignment = buscarEnteroEn(Constantes.SECTION_ALIGNMENT_POSICION);
-
-        cargarIntEn((2 + sizeOfRawData / sectionAlignment) * sectionAlignment, Constantes.BASE_OF_DATA_POSICION);
+        return b1 << 24 | b2 << 16 | b3 << 8 | b4 << 0;
     }
 
-    public void mostrarInicioDeProposicion(String instruccion) {
-        System.out.println("\n\n------------ [Inicio] proposición " + instruccion + " ------------\n");
-    }
+    public static Byte[] intAByteArray(int valor) {
 
-    public void mostrarFinalDeProposicion(String instruccion) {
-        System.out.println("\n------------ [Fin] proposición " + instruccion + " ------------\n");
-    }
+        Byte[] val = new Byte[4];
 
-    public void mostrarInicioDeInstruccion(String instruccion, int tamano) {
-        System.out.println("\n-- [Cargando] instrucción " + instruccion + " (" + tamano + " bytes):");
-    }
+        Integer v1 = (valor >> 24) & 0xff;
+        Integer v2 = (valor >> 16) & 0xff;
+        Integer v3 = (valor >> 8) & 0xff;
+        Integer v4 = (valor >> 0) & 0xff;
 
-    public String toHexa(int valor) {
-        return "0x" + Integer.toHexString(valor).toUpperCase();
+        val[0] = v1.byteValue();
+        val[1] = v2.byteValue();
+        val[2] = v3.byteValue();
+        val[3] = v4.byteValue();
+
+        return val;
     }
 
 }
